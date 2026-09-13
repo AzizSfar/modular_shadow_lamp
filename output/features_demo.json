@@ -1,0 +1,149 @@
+{
+  "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\examples\\two_rings.svg",
+  "output": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\features_demo.scad",
+  "original_geometry_size_mm": [
+    80.0,
+    240.0
+  ],
+  "polygon_vertices": 112,
+  "normalized_radius": 0.5,
+  "settings": {
+    "Embedded_artwork": true,
+    "Embedded_radius_factor": 0.5,
+    "Use_svg": false,
+    "Shadow_length": 300,
+    "Cylinder_diameter": 100,
+    "Cylinder_height": 40.0,
+    "Module_index": 0,
+    "Smallest_detail_percent": 5,
+    "Emitter_diameter": 0.2,
+    "Emitter_axial_depth": 0,
+    "Shadow_x": 40.0,
+    "Shadow_y": 30.0,
+    "Cover_hole_diameter": 6.0,
+    "Embedded_cover_artwork": true,
+    "Support_layout": "Radial and XY",
+    "Artwork_mode": "Dark silhouette",
+    "Support_1_enabled": true,
+    "Support_1_start": [
+      0.0,
+      0.0
+    ],
+    "Support_1_end": [
+      100.0,
+      150.0
+    ],
+    "Support_1_width": 12.0,
+    "Support_2_enabled": false,
+    "Support_3_enabled": false,
+    "Support_4_enabled": false
+  },
+  "detail_measurement": "USER DECLARED; not automatically measured",
+  "validation": "CONNECTED BODY; CLOSED TWO-MANIFOLD EDGES; OPTICAL ENVELOPE PASSES",
+  "automatic_bridge_angles": [],
+  "cover_artwork": {
+    "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\examples\\cover_emblem.svg",
+    "original_geometry_size_mm": [
+      100.0,
+      100.0
+    ],
+    "polygon_vertices": 8
+  },
+  "optical_log": "ECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"Embedded artwork\"\nECHO: \"Shadow placement XY mm\", [40, 30]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 6]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 34]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 34]\nECHO: \"Closed first-module depth / stacking pitch mm\", [40, 35.5]\nECHO: \"Central occlusion radius mm\", 59.6491\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [203, 15]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.594045, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [0.645833, 2]\nECHO: \"Translated artwork: LED stays on-axis; height uses a conservative shifted-field bound, not a global XYZ optimum.\"\nECHO: \"Manual support: wall width / conservative local shell width mm\", [12, 0.564391]\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\n",
+  "body_mesh": {
+    "triangles": 10660,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 15990
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 48202.872,
+    "bounds_mm": [
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        0.0,
+        37.98
+      ]
+    ],
+    "suggested_bridge_angles": []
+  },
+  "cover_mesh": {
+    "triangles": 3876,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 5814
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 15703.556,
+    "bounds_mm": [
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        0.0,
+        4.5
+      ]
+    ],
+    "suggested_bridge_angles": []
+  },
+  "cover_base_mesh": {
+    "triangles": 3660,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 5490
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 15112.118,
+    "bounds_mm": [
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        0.0,
+        4.5
+      ]
+    ],
+    "suggested_bridge_angles": []
+  },
+  "cover_artwork_mesh": {
+    "triangles": 288,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 432
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 591.438,
+    "bounds_mm": [
+      [
+        -32.5,
+        32.5
+      ],
+      [
+        -32.5,
+        32.5
+      ],
+      [
+        0.0,
+        0.6
+      ]
+    ],
+    "suggested_bridge_angles": []
+  }
+}

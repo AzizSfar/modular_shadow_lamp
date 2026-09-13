@@ -1,0 +1,52 @@
+group();
+group() {
+	group() {
+		group() {
+			group() {
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "GENERATION NOT POSSIBLE", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, -6], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "LED xyz = 0, 0, 24 mm (local)", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, -12], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "Centre hidden: radius 64.9 mm", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, -18], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "Cut estimate: 0.23 mm", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, -24], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "Blur estimate: 1.88 mm", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+				multmatrix([[1, 0, 0, 0], [0, 1, 0, -30], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+					color([1, 0.25, 0.15, 1]) {
+						linear_extrude(height = 0.6, center = false, convexity = 1, scale = [1, 1], $fn = 180, $fa = 12, $fs = 2) {
+							text(text = "Try height 36 mm, shadow 719.9 mm.", size = 4, spacing = 1, font = "", direction = "ltr", language = "en", script = "Latn", halign = "left", valign = "baseline", $fn = 180, $fa = 12, $fs = 2);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+

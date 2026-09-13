@@ -1,0 +1,104 @@
+{
+  "pillar_bore_clear": true,
+  "cover_hole_clear": true,
+  "inlay_depth_mm": 0.6,
+  "base_plus_inlay_volume_matches_cover": true,
+  "parts": {
+    "body": {
+      "triangles": 10660,
+      "surface_components": 1,
+      "edge_incidence_histogram": {
+        "2": 15990
+      },
+      "closed_two_manifold_edges": true,
+      "signed_volume_mm3": 48202.872,
+      "bounds_mm": [
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          0.0,
+          37.98
+        ]
+      ],
+      "suggested_bridge_angles": []
+    },
+    "cover": {
+      "triangles": 3876,
+      "surface_components": 1,
+      "edge_incidence_histogram": {
+        "2": 5814
+      },
+      "closed_two_manifold_edges": true,
+      "signed_volume_mm3": 15703.556,
+      "bounds_mm": [
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          0.0,
+          4.5
+        ]
+      ],
+      "suggested_bridge_angles": []
+    },
+    "base": {
+      "triangles": 3660,
+      "surface_components": 1,
+      "edge_incidence_histogram": {
+        "2": 5490
+      },
+      "closed_two_manifold_edges": true,
+      "signed_volume_mm3": 15112.118,
+      "bounds_mm": [
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          -50.0,
+          50.0
+        ],
+        [
+          0.0,
+          4.5
+        ]
+      ],
+      "suggested_bridge_angles": []
+    },
+    "artwork": {
+      "triangles": 288,
+      "surface_components": 1,
+      "edge_incidence_histogram": {
+        "2": 432
+      },
+      "closed_two_manifold_edges": true,
+      "signed_volume_mm3": 591.438,
+      "bounds_mm": [
+        [
+          -32.5,
+          32.5
+        ],
+        [
+          -32.5,
+          32.5
+        ],
+        [
+          0.0,
+          0.6
+        ]
+      ],
+      "suggested_bridge_angles": []
+    }
+  }
+}

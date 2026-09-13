@@ -1,0 +1,60 @@
+{
+  "method": "Perspective projection of opaque STL triangles versus independently exported analytic footprint",
+  "source_xyz_mm": [
+    0,
+    0,
+    34.0
+  ],
+  "wall_extent_mm": 470.0,
+  "pixels": 2000,
+  "intersection_over_union": 0.9864608737441107,
+  "disagreement_percent_of_wall": 0.30145,
+  "body": {
+    "triangles": 10660,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 15990
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 48202.872,
+    "bounds_mm": [
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        0.0,
+        37.98
+      ]
+    ],
+    "suggested_bridge_angles": []
+  },
+  "cover": {
+    "triangles": 3876,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 5814
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 15703.556,
+    "bounds_mm": [
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        -50.0,
+        50.0
+      ],
+      [
+        0.0,
+        4.5
+      ]
+    ],
+    "suggested_bridge_angles": []
+  }
+}

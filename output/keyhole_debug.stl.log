@@ -1,0 +1,18 @@
+ECHO: "STATUS", "OPTICAL ENVELOPE PASSES; SVG topology still requires checking"
+ECHO: "LED centre, local XYZ mm", [0, 0, 26.5]
+ECHO: "LED centre, wall XYZ mm", [0, 0, 26.5]
+ECHO: "Closed first-module depth / stacking pitch mm", [30, 25.5]
+ECHO: "Central occlusion radius mm", 63.0952
+ECHO: "Conservative artwork radius / smallest declared detail mm", [150, 15]
+ECHO: "Estimated minimum cut / selected minimum mm", [0.848, 0.4]
+ECHO: "Estimated worst geometric blur / selected maximum mm", [0.425, 2]
+ECHO: "LED XY is the analytic minimax solution for a concentric 360-degree field; not an arbitrary-artwork optimum."
+ECHO: "Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it."
+ECHO: "Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here."
+Geometries in cache: 6
+Geometry cache size in bytes: 14728
+CGAL Polyhedrons in cache: 0
+CGAL cache size in bytes: 0
+Total rendering time: 0:00:00.001
+   Top level object is a 3D object:
+   Facets:        164

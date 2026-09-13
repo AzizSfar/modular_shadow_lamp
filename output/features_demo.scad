@@ -1,0 +1,556 @@
+// Artwork is embedded. To replace it, select Artwork_source = SVG file, or rerun prepare_svg.py.
+// Modular shadow lamp — millimetres. Read README.md and OPTICS.md.
+// Self-contained OpenSCAD 2021.01 / MakerWorld Parametric Model Maker.
+// The wall is XY at z=0; +z points into the room. Filled SVG areas transmit light.
+
+/* [View] */
+Output = "Assembly"; // [Assembly,Projection,Body,Cover,Cover base,Cover artwork,Print layout,Stack preview,Diagnostics]
+Show_rays = false;
+Show_report = true;
+Cover_preview = "Exploded"; // [Exploded,Fitted,Hidden]
+// Wall coordinates in mm: cylinder centre = (0,0), X right, Y up.
+Show_grid = false;
+Grid_spacing = 25; // [5:5:100]
+
+/* [Artwork] */
+// Automatic uses a changed file path first, then embedded artwork, then the demo.
+// Choose SVG file explicitly if MakerWorld keeps the uploaded filename default.svg.
+Artwork_source = "Automatic"; // [Automatic,SVG file,Built-in demo,Embedded artwork]
+// MakerWorld recognizes this variable as an SVG upload control.
+Svg_file = "default.svg";
+// Select the LONGER artwork axis. The other axis scales proportionally.
+Svg_long_axis = "Y"; // [X,Y]
+// Longest dimension of the complete artwork BEFORE central occlusion, in mm.
+Shadow_length = 300; // [100:5:1500]
+// Light shapes matches luminous outlines in the reference photo.
+Artwork_mode = "Dark silhouette"; // [Light shapes,Dark silhouette]
+// Small lit border around the dark silhouette field; avoids tangential, invalid cuts.
+Dark_field_border = 3; // [0.5:0.5:20]
+Artwork_rotation = 0; // [-180:1:180]
+Shadow_x = 40.0; // [-1000:1:1000]
+Shadow_y = 30.0; // [-1000:1:1000]
+// Smallest IMPORTANT line or gap, as % of the artwork's longest dimension.
+// This is a declared design requirement, NOT an automatic SVG measurement.
+Smallest_detail_percent = 5; // [0.1:0.1:20]
+
+/* [Cylinder] */
+Cylinder_diameter = 100; // [60:1:250]
+// Total closed depth of one module, including its fitted cover.
+Cylinder_height = 40.0; // [18:0.5:200]
+Wall_thickness = 2; // [1.2:0.1:4]
+// 0 = first module at wall; 1 = second module, etc. Recompute each module.
+Module_index = 0; // [0:1:8]
+
+/* [LED and optical quality] */
+LED_position = "Automatic"; // [Automatic,Manual height]
+// Height of the EMITTING CENTRE above this module's back, not package bottom.
+Manual_LED_height = 24; // [0:0.1:200]
+// Width of the actual emitting area, not the plastic lens or LED package.
+Emitter_diameter = 0.2; // [0:0.01:5]
+// Axial thickness of the emitting area. 0 assumes a planar emitter parallel to wall.
+Emitter_axial_depth = 0; // [0:0.01:2]
+Maximum_blur = 2; // [0.1:0.1:20]
+Minimum_cut_width = 0.4; // [0.15:0.05:2]
+// Emitting centre above the end of the printed pillar; measure your LED assembly.
+Emitter_above_pillar = 3; // [1:0.1:10]
+Pillar_diameter = 8; // [4:0.5:20]
+// Continuous empty passage through the rear floor and the whole pillar, in mm.
+Pillar_wire_bore = 3; // [1:0.1:6]
+
+/* [Stencil supports] */
+// Spokes interrupt light but can connect otherwise floating opaque islands.
+// They do NOT guarantee connectivity for arbitrary artwork; run prepare_svg.py.
+Support_bridges = true;
+Support_layout = "Radial and XY"; // [Radial,Manual XY,Radial and XY]
+Bridge_count = 12; // [3:1:48]
+Bridge_width = 0.8; // [0.4:0.1:2]
+Bridge_rotation = 15; // [0:1:180]
+
+/* [Manual XY supports] */
+// Segments are specified on the WALL grid. Width is the dark strip width on the wall.
+// Enable Manual XY or Radial and XY in Support_layout to use these segments.
+Support_1_enabled = true;
+Support_1_start = [0.0,0.0];
+Support_1_end = [100.0,150.0];
+Support_1_width = 12.0; // [0.5:0.5:50]
+Support_2_enabled = false;
+Support_2_start = [0,0];
+Support_2_end = [200,0];
+Support_2_width = 8; // [0.5:0.5:50]
+Support_3_enabled = false;
+Support_3_start = [0,0];
+Support_3_end = [0,-200];
+Support_3_width = 8; // [0.5:0.5:50]
+Support_4_enabled = false;
+Support_4_start = [0,0];
+Support_4_end = [-200,0];
+Support_4_width = 8; // [0.5:0.5:50]
+
+/* [Cover artwork and wiring] */
+// White FLUSH inlay on the outward-facing circular cover; independent of shadow SVG.
+Cover_artwork_source = "Automatic"; // [Automatic,None,SVG file,Embedded artwork]
+Cover_svg_file = "default.svg";
+Cover_svg_long_axis = "Y"; // [X,Y]
+Cover_artwork_length = 65; // [5:1:240]
+Cover_artwork_rotation = 0; // [-180:1:180]
+Cover_artwork_depth = 0.6; // [0.2:0.1:1.2]
+// Centre hole through both cover and inlay. Zero means a closed cover.
+Cover_hole_diameter = 6.0; // [0:0.1:20]
+
+/* [Joints and cover] */
+Joint_depth = 2.5; // [1.5:0.1:4]
+Joint_clearance = 0.2; // [0.1:0.05:0.4]
+Cover_plate = 2; // [1.5:0.1:3]
+// Radial pilot holes in female collars for optional retaining screws.
+Retaining_screws = true;
+Screw_pilot_diameter = 2.1; // [1.5:0.1:3]
+
+/* [Quality] */
+Cylinder_facets = 180; // [72:12:360]
+
+/* [Hidden] */
+// Compatibility with older saved presets; Artwork_source overrides this control.
+Use_svg = false;
+$fn = Cylinder_facets;
+eps = 0.02;
+// prepare_svg.py replaces this block with normalized, embedded SVG geometry.
+Embedded_artwork = true;
+Embedded_radius_factor = 0.5;
+// Extra bridge angles added by the helper after checking the actual exported mesh.
+Embedded_bridge_angles = [];
+// BEGIN EMBEDDED ARTWORK
+module embedded_artwork() {
+    union() {
+        polygon(points=[[0.037086792,0.170845417],[0.07231375,0.183171667],[0.103915,0.203027917],[0.130305417,0.229418333],[0.15016125,0.261019167],[0.162487917,0.296246667],[0.166666667,0.333333333],[0.162487917,0.37042],[0.15016125,0.405647083],[0.130305417,0.43725],[0.103915,0.4636375],[0.07231375,0.483495833],[0.037086792,0.495820833],[0.0,0.5],[-0.037086792,0.495820833],[-0.07231375,0.483495833],[-0.103915,0.4636375],[-0.130305417,0.43725],[-0.15016125,0.405647083],[-0.162487917,0.37042],[-0.166666667,0.333333333],[-0.162487917,0.296246667],[-0.15016125,0.261019167],[-0.130305417,0.229418333],[-0.103915,0.203027917],[-0.07231375,0.183171667],[-0.037086792,0.170845417],[0.0,0.166666667],[-0.016689042,0.26021375],[-0.032541292,0.265760417],[-0.046761667,0.274695833],[-0.0586375,0.286571667],[-0.0675725,0.300792083],[-0.073119583,0.316644167],[-0.075,0.333333333],[-0.073119583,0.3500225],[-0.0675725,0.365874583],[-0.0586375,0.380095],[-0.046761667,0.391970833],[-0.032541292,0.400905833],[-0.016689042,0.406452917],[0.0,0.408333333],[0.016689042,0.406452917],[0.032541292,0.400905833],[0.046761667,0.391970833],[0.0586375,0.380095],[0.0675725,0.365874583],[0.073119583,0.3500225],[0.075,0.333333333],[0.073119583,0.316644167],[0.0675725,0.300792083],[0.0586375,0.286571667],[0.046761667,0.274695833],[0.032541292,0.265760417],[0.016689042,0.26021375],[0.0,0.258333333],[0.037086792,-0.495820833],[0.07231375,-0.483495833],[0.103915,-0.4636375],[0.130305417,-0.43725],[0.15016125,-0.405647083],[0.162487917,-0.37042],[0.166666667,-0.333333333],[0.162487917,-0.296246667],[0.15016125,-0.261019167],[0.130305417,-0.229418333],[0.103915,-0.203027917],[0.07231375,-0.183171667],[0.037086792,-0.170845417],[0.0,-0.166666667],[-0.037086792,-0.170845417],[-0.07231375,-0.183171667],[-0.103915,-0.203027917],[-0.130305417,-0.229418333],[-0.15016125,-0.261019167],[-0.162487917,-0.296246667],[-0.166666667,-0.333333333],[-0.162487917,-0.37042],[-0.15016125,-0.405647083],[-0.130305417,-0.43725],[-0.103915,-0.4636375],[-0.07231375,-0.483495833],[-0.037086792,-0.495820833],[0.0,-0.5],[-0.016689042,-0.406452917],[-0.032541292,-0.400905833],[-0.046761667,-0.391970833],[-0.0586375,-0.380095],[-0.0675725,-0.365874583],[-0.073119583,-0.3500225],[-0.075,-0.333333333],[-0.073119583,-0.316644167],[-0.0675725,-0.300792083],[-0.0586375,-0.286571667],[-0.046761667,-0.274695833],[-0.032541292,-0.265760417],[-0.016689042,-0.26021375],[0.0,-0.258333333],[0.016689042,-0.26021375],[0.032541292,-0.265760417],[0.046761667,-0.274695833],[0.0586375,-0.286571667],[0.0675725,-0.300792083],[0.073119583,-0.316644167],[0.075,-0.333333333],[0.073119583,-0.3500225],[0.0675725,-0.365874583],[0.0586375,-0.380095],[0.046761667,-0.391970833],[0.032541292,-0.400905833],[0.016689042,-0.406452917],[0.0,-0.408333333]],
+            paths=[[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27],[28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55],[56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83],[84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111]],convexity=30);
+    }
+}
+// END EMBEDDED ARTWORK
+Embedded_cover_artwork = true;
+// BEGIN EMBEDDED COVER ARTWORK
+module embedded_cover_artwork() {
+    union() {
+        polygon(points=[[0.12,-0.12],[0.5,0.0],[0.12,0.12],[0.0,0.5],[-0.12,0.12],[-0.5,0.0],[-0.12,-0.12],[0.0,-0.5]],
+            paths=[[0,1,2,3,4,5,6,7]],convexity=30);
+    }
+}
+// END EMBEDDED COVER ARTWORK
+
+R = Cylinder_diameter/2;
+Ri = R-Wall_thickness;
+frame_width = max(4, Wall_thickness+2);
+Rf = R-frame_width;
+rear_floor = Joint_depth + 2;
+rear_guard = 1;
+front_guard = 3;
+cover_depth = Joint_depth + Cover_plate;
+pitch = Cylinder_height-cover_depth;
+wall_offset = Module_index*pitch;
+aperture_bottom = rear_floor+rear_guard;
+aperture_top = pitch-front_guard;
+tongue_outer = R-1.4;
+tongue_inner = tongue_outer-1.6;
+// A square's diagonal gives a conservative envelope for direct SVG import.
+// The helper calculates a tighter radius from the actual polygon vertices.
+active_artwork = Artwork_source=="Automatic" ?
+    ((Use_svg || Svg_file!="default.svg") ? "SVG file" :
+        (Embedded_artwork ? "Embedded artwork" : "Built-in demo")) : Artwork_source;
+using_svg = active_artwork=="SVG file";
+using_embedded = active_artwork=="Embedded artwork";
+active_cover_artwork = Cover_artwork_source=="Automatic" ?
+    (Cover_svg_file!="default.svg" ? "SVG file" :
+        (Embedded_cover_artwork ? "Embedded artwork" : "None")) : Cover_artwork_source;
+k = using_embedded ? Embedded_radius_factor : (using_svg ? sqrt(2)/2 : 0.5);
+detail_fraction = Smallest_detail_percent/100;
+shadow_offset = [Shadow_x,Shadow_y];
+offset_radius = norm(shadow_offset);
+function beam_radius(L) = k*L+(Artwork_mode=="Dark silhouette" ? Dark_field_border : 0);
+function far_radius(L) = offset_radius+beam_radius(L);
+// Potential outer reach, used only as an envelope test (not SVG content analysis).
+function field_reach(L) = offset_radius+L/2;
+r_far = far_radius(Shadow_length);
+radial_supports = Support_bridges && Support_layout!="Manual XY";
+xy_supports = Support_bridges && Support_layout!="Radial";
+manual_supports = [
+    [Support_1_enabled,Support_1_start,Support_1_end,Support_1_width],
+    [Support_2_enabled,Support_2_start,Support_2_end,Support_2_width],
+    [Support_3_enabled,Support_3_start,Support_3_end,Support_3_width],
+    [Support_4_enabled,Support_4_start,Support_4_end,Support_4_width]];
+// Added by mesh preflight even when only manual supports are selected.
+repair_angles = Support_bridges && using_embedded ? Embedded_bridge_angles : [];
+manual_extent = xy_supports ? max(concat([0],[for(s=manual_supports) if(s[0])
+    max(abs(s[1][0]),abs(s[1][1]),abs(s[2][0]),abs(s[2][1]))+s[3]])) : 0;
+view_extent = max(R*1.5,abs(Shadow_x)+Shadow_length*0.62,
+    abs(Shadow_y)+Shadow_length*0.62,Show_grid ? manual_extent+10 : 0);
+
+function off(H) = Module_index*(H-cover_depth);
+function top(H) = off(H)+H-cover_depth-front_guard;
+function bottom(H) = off(H)+aperture_bottom;
+// A following module has a solid back at the seating plane. Keep the LED below it.
+function ceiling(H) = off(H)+H-cover_depth-1.5;
+// Upper collar is thicker than the optical sidewall, hence Rf, not Ri.
+function auto_source(H,L) = min(ceiling(H),
+    far_radius(L)>Rf ? top(H)/(1-Rf/far_radius(L)) : ceiling(H),
+    // Do not let the pedestal's shadow swallow the entire longest dimension.
+    Emitter_above_pillar*(field_reach(L)-Minimum_cut_width-eps)/(Pillar_diameter/2));
+function source(H,L) = LED_position=="Manual height" ? off(H)+Manual_LED_height : auto_source(H,L);
+function dead_radius(H,L) = let(h=source(H,L))
+    h>bottom(H) ? max(R*h/(h-bottom(H)), Pillar_diameter/2*h/Emitter_above_pillar) : 1e12;
+// Least local stretch from wall artwork to inner cylindrical surface.
+function cut_estimate(H,L) = let(h=source(H,L), r=far_radius(L))
+    detail_fraction*L*min(Ri/r,h*Ri/(r*r));
+// Conservative sum of transverse and axial geometric source blur.
+function blur_estimate(H,L) = let(h=source(H,L),r=far_radius(L))
+    max(0,r/Ri-1)*(Emitter_diameter+Emitter_axial_depth*r/max(h,eps));
+function mechanical_ok(H,L) =
+    H-cover_depth-front_guard > aperture_bottom+1 &&
+    Ri>Pillar_diameter/2+5 && Rf>Pillar_diameter/2+5 &&
+    tongue_inner-Joint_clearance>Rf &&
+    tongue_outer+Joint_clearance+0.4<R-0.5 &&
+    Pillar_wire_bore<Pillar_diameter-1.6 &&
+    (!Retaining_screws || Screw_pilot_diameter<Joint_depth) &&
+    source(H,L)-off(H)-Emitter_above_pillar>rear_floor+1;
+function quality_ok(H,L) = cut_estimate(H,L)>=Minimum_cut_width-1e-9 &&
+    blur_estimate(H,L)<=Maximum_blur+1e-9;
+function feasible(H,L) = mechanical_ok(H,L) && quality_ok(H,L) &&
+    source(H,L)>bottom(H)+1 && source(H,L)<=ceiling(H)+1e-9 &&
+    source(H,L)<=auto_source(H,L)+1e-9 &&
+    field_reach(L)>dead_radius(H,L)+Minimum_cut_width;
+// Quality decreases monotonically with L in automatic mode. Search 0.01 mm.
+function max_length(H,lo,hi,n=18) = n==0 ? lo :
+    let(mid=(lo+hi)/2) quality_ok(H,mid) ? max_length(H,mid,hi,n-1) : max_length(H,lo,mid,n-1);
+// With an offset, feature quality need not be monotone in length. Use a bounded
+// 1%-of-requested-length scan instead of the centred case's binary search.
+function length_at_height(H) = offset_radius>eps ?
+    let(candidates=[for(i=[1:100]) let(L=Shadow_length*i/100) if(feasible(H,L)) L])
+        (len(candidates)>0 ? max(candidates) : 0) :
+    (quality_ok(H,Shadow_length) ? Shadow_length :
+        (quality_ok(H,2*R+1) ? floor(max_length(H,2*R+1,Shadow_length)*10)/10 : 0));
+function cost(pair) = pow((pair[0]-Cylinder_height)/Cylinder_height,2)+
+    pow((pair[1]-Shadow_length)/Shadow_length,2);
+function best_pair(a,i=0,b=undef) = i>=len(a) ? b :
+    best_pair(a,i+1,is_undef(b) || cost(a[i])<cost(b) ? a[i] : b);
+
+h = source(Cylinder_height,Shadow_length);
+local_h = h-wall_offset;
+dead = dead_radius(Cylinder_height,Shadow_length);
+valid = feasible(Cylinder_height,Shadow_length);
+// Nearest means this explicitly weighted, bounded grid; never a global claim.
+search_max = min(300,max(160,3*Cylinder_height));
+suggestions = valid || LED_position!="Automatic" ? [] : [
+    for(H=[Cylinder_height:1:search_max]) let(L=length_at_height(H))
+        if(L>0 && feasible(H,L)) [H,L]
+];
+nearest = best_pair(suggestions);
+same_height_L = valid ? Shadow_length : length_at_height(Cylinder_height);
+same_length_options = valid ? [] : [for(H=[Cylinder_height:1:search_max])
+    if(feasible(H,Shadow_length)) H];
+same_length_H = len(same_length_options)>0 ? same_length_options[0] : undef;
+suggestion_text = is_undef(nearest) ? "No candidate in search range; change diameter, detail or emitter." :
+    str("Try height ",nearest[0]," mm, shadow ",nearest[1]," mm.");
+
+assert(Cylinder_diameter>0 && Cylinder_height>0 && Shadow_length>0,"Dimensions must be positive.");
+assert(Smallest_detail_percent>0 && Minimum_cut_width>0 && Maximum_blur>0,"Quality limits must be positive.");
+assert(Emitter_diameter>=0 && Emitter_axial_depth>=0,"Emitter sizes cannot be negative.");
+assert(Module_index>=0 && Module_index==floor(Module_index),"Module index must be a non-negative integer.");
+assert(Bridge_count>=1 && Joint_clearance>=0 && Emitter_above_pillar>0,"Invalid support/joint parameters.");
+assert(Wall_thickness>0 && Pillar_diameter>0 && Pillar_wire_bore>0 && Joint_depth>0 && Cover_plate>0,
+    "Mechanical dimensions must be positive.");
+assert(!using_embedded || Embedded_artwork,"This file has no embedded artwork. Select SVG file or Built-in demo.");
+assert(active_cover_artwork!="Embedded artwork" || Embedded_cover_artwork,"No embedded cover SVG: select SVG file or None.");
+assert(Cover_hole_diameter>=0 && Cover_hole_diameter/2<Rf-1,"Cover hole is negative or would damage the joint.");
+assert(active_cover_artwork=="None" || (Cover_artwork_depth>0 && Cover_artwork_depth<Cover_plate-Joint_clearance-0.5),
+    "Inlay must leave at least 0.5 mm of solid cover under it.");
+assert(Cover_artwork_length>0 && Grid_spacing>0,"Artwork length and grid spacing must be positive.");
+assert(Dark_field_border>0,"The dark silhouette field needs a positive border for a valid stencil.");
+for(s=manual_supports) if(xy_supports && s[0]) {
+    assert(len(s[1])==2 && len(s[2])==2 && s[3]>0,"Support requires two XY endpoints and positive width.");
+    assert(norm(s[2]-s[1])>eps,"Support start and end must be different.");
+}
+
+echo("ACTIVE ARTWORK",active_artwork);
+if(using_svg) echo("SVG PATH",Svg_file);
+echo("COVER ARTWORK",active_cover_artwork);
+echo("Shadow placement XY mm",shadow_offset);
+echo("Pillar through-bore / cover hole mm",[Pillar_wire_bore,Cover_hole_diameter]);
+echo("STATUS", valid ? "OPTICAL ENVELOPE PASSES; SVG topology still requires checking" :
+    "GENERATION NOT POSSIBLE under the selected limits");
+echo("LED centre, local XYZ mm",[0,0,local_h]);
+echo("LED centre, wall XYZ mm",[0,0,h]);
+echo("Closed first-module depth / stacking pitch mm",[Cylinder_height,pitch]);
+echo("Central occlusion radius mm",dead);
+echo("Conservative artwork radius / smallest declared detail mm",[r_far,detail_fraction*Shadow_length]);
+echo("Estimated minimum cut / selected minimum mm",[cut_estimate(Cylinder_height,Shadow_length),Minimum_cut_width]);
+echo("Estimated worst geometric blur / selected maximum mm",[blur_estimate(Cylinder_height,Shadow_length),Maximum_blur]);
+echo(offset_radius<eps ? "LED XY is the minimax solution for a concentric 360-degree field." :
+    "Translated artwork: LED stays on-axis; height uses a conservative shifted-field bound, not a global XYZ optimum.");
+for(s=manual_supports) if(xy_supports && s[0]) {
+    sr=max(norm(s[1]),norm(s[2]))+s[3]/2;
+    estimate=s[3]*min(Ri/sr,h*Ri/(sr*sr));
+    echo("Manual support: wall width / conservative local shell width mm",[s[3],estimate]);
+    if(estimate<Minimum_cut_width) echo("WARNING: this manual support may be too thin; increase its wall width and run mesh preflight.");
+}
+echo("Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.");
+echo("Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.");
+if(!valid) {
+    echo("SUGGESTED sampled compromise [height,shadow] mm",nearest);
+    echo("Keep height: shadow mm", feasible(Cylinder_height,same_height_L) ? same_height_L : "No feasible smaller length in range");
+    echo("Keep shadow: height mm",is_undef(same_length_H) ? "No feasible height <= search limit" : same_length_H);
+    echo("Search: height increases in 1 mm steps, <=300 mm; equal squared relative changes in height and shadow length.");
+    if(offset_radius>eps) echo("Offset search keeps XY fixed and samples lengths in 1% steps; no continuous closest-point claim.");
+    if(LED_position!="Automatic") echo("Switch LED_position to Automatic for reliable suggestions.");
+}
+
+// An original, open-aperture sunburst demo; no external file required.
+module demo_artwork() {
+    for(a=[0:30:330]) rotate(a)
+        hull() {
+            translate([0.24,0]) circle(r=0.038,$fn=16);
+            translate([0.46,0]) circle(r=0.04,$fn=16);
+        }
+}
+module normalized_artwork() {
+    if(using_svg) {
+        if(Svg_long_axis=="X") resize([1,0],auto=true) import(file=Svg_file,center=true,convexity=20);
+        else resize([0,1],auto=true) import(file=Svg_file,center=true,convexity=20);
+    } else if(using_embedded) embedded_artwork();
+    else demo_artwork();
+}
+module target_artwork() {
+    translate(shadow_offset) rotate(Artwork_rotation) scale(Shadow_length) normalized_artwork();
+}
+module intended_light() {
+    if(Artwork_mode=="Light shapes") target_artwork();
+    else difference() { translate(shadow_offset) circle(r=beam_radius(Shadow_length)); target_artwork(); }
+}
+// A perspective cone. This cuts oblique tunnels through the FULL wall thickness.
+// Cropping the extrusion just below its apex avoids degenerate mesh vertices.
+module perspective_cone() {
+    apex_gap = 0.05;
+    translate([0,0,-wall_offset])
+        linear_extrude(height=h-apex_gap,scale=apex_gap/h,convexity=30)
+            children();
+}
+module light_cone() { perspective_cone() intended_light(); }
+// These wedges have constant angular width. Their shadows are exactly wedges.
+module bridge_wedges_2d(radius) {
+    angle = 2*asin(min(0.99,Bridge_width/(2*Ri)));
+    angles = concat(radial_supports ? [for(a=[0:360/Bridge_count:360-360/Bridge_count]) a+Bridge_rotation] : [],repair_angles);
+    for(a=angles)
+        rotate(a)
+            // Keep wedges disjoint at the axis: a shared zero-width edge is non-manifold.
+            polygon([[0.1*cos(angle/2),0.1*sin(angle/2)],
+                [radius*cos(angle/2),radius*sin(angle/2)],
+                [radius*cos(angle/2),-radius*sin(angle/2)],
+                [0.1*cos(angle/2),-0.1*sin(angle/2)]]);
+}
+module xy_support_shapes() {
+    if(xy_supports) for(s=manual_supports) if(s[0]) hull() {
+        translate(s[1]) circle(d=s[3],$fn=24);
+        translate(s[2]) circle(d=s[3],$fn=24);
+    }
+}
+module optical_cutters() {
+    difference() {
+        intersection() {
+            light_cone();
+            translate([0,0,aperture_bottom]) cylinder(r=R+1,h=aperture_top-aperture_bottom);
+        }
+        if(Support_bridges) translate([0,0,aperture_bottom-eps])
+            linear_extrude(height=aperture_top-aperture_bottom+2*eps)
+                bridge_wedges_2d(R+3);
+        if(xy_supports) perspective_cone() xy_support_shapes();
+    }
+}
+module ring(outer,inner,height) {
+    difference() { cylinder(r=outer,h=height); translate([0,0,-eps]) cylinder(r=inner,h=height+2*eps); }
+}
+module tongue() {
+    ring(tongue_outer,tongue_inner,Joint_depth);
+    // Registration key; all modules and their artwork share an angular datum.
+    translate([tongue_outer-0.3,-1,0]) cube([0.7,2,Joint_depth]);
+}
+module socket() {
+    translate([0,0,-eps]) ring(tongue_outer+Joint_clearance,
+        tongue_inner-Joint_clearance,Joint_depth+Joint_clearance+eps);
+    translate([tongue_outer-0.3-Joint_clearance,-1-Joint_clearance,-eps])
+        cube([0.7+2*Joint_clearance,2+2*Joint_clearance,Joint_depth+Joint_clearance+eps]);
+}
+module retaining_holes() {
+    if(Retaining_screws) for(a=[60,180,300]) rotate([0,0,a])
+        translate([R+eps,0,Joint_depth/2]) rotate([0,-90,0])
+            cylinder(d=Screw_pilot_diameter,h=R-tongue_inner+eps,$fn=24);
+}
+module keyhole() {
+    // Two 3.5 mm screw shafts, 7 mm entry heads. Insert then slide lamp down 5 mm.
+    linear_extrude(height=rear_floor+2*eps) union() {
+        circle(d=7,$fn=32);
+        hull() { circle(d=3.5,$fn=24); translate([0,5]) circle(d=3.5,$fn=24); }
+    }
+}
+module body() {
+    difference() {
+        union() {
+            difference() {
+                union() {
+                    cylinder(r=R,h=rear_floor);
+                    ring(R,Ri,pitch);
+                    translate([0,0,aperture_top]) ring(R,Rf,front_guard);
+                    translate([0,0,pitch-eps]) tongue();
+                }
+                optical_cutters();
+            }
+            // Thin hollow pedestal. Emitting centre is Emitter_above_pillar higher.
+            translate([0,0,rear_floor-eps])
+                cylinder(d=Pillar_diameter,h=local_h-Emitter_above_pillar-rear_floor+eps);
+        }
+        socket();
+        if(Module_index>0) retaining_holes();
+        translate([0,0,-eps]) cylinder(d=Pillar_wire_bore,h=local_h+eps,$fn=32);
+        if(Module_index==0) for(x=[-R/2,R/2]) translate([x,0,-eps]) keyhole();
+        // Rear cable route, contained under the opaque rear floor.
+        translate([-Pillar_wire_bore/2,-R-1,-eps]) cube([Pillar_wire_bore,R+1,1.2]);
+    }
+}
+module cover_artwork_2d() {
+    difference() {
+        intersection() {
+            circle(r=R-2);
+            rotate(Cover_artwork_rotation) scale(Cover_artwork_length) {
+                if(active_cover_artwork=="Embedded artwork") embedded_cover_artwork();
+                else if(active_cover_artwork=="SVG file") {
+                    if(Cover_svg_long_axis=="X") resize([1,0],auto=true) import(Cover_svg_file,center=true,convexity=20);
+                    else resize([0,1],auto=true) import(Cover_svg_file,center=true,convexity=20);
+                }
+            }
+        }
+        if(Cover_hole_diameter>0) circle(d=Cover_hole_diameter,$fn=64);
+    }
+}
+module cover_artwork() {
+    if(active_cover_artwork!="None") translate([0,0,cover_depth-Cover_artwork_depth])
+        linear_extrude(height=Cover_artwork_depth,convexity=20) cover_artwork_2d();
+}
+module cover_base() {
+    difference() {
+        cylinder(r=R,h=cover_depth);
+        socket();
+        // Electronics clearance under the opaque lid plate.
+        translate([0,0,-eps]) cylinder(r=Rf,h=Joint_depth+Joint_clearance+eps);
+        retaining_holes();
+        if(Cover_hole_diameter>0) translate([0,0,-eps]) cylinder(d=Cover_hole_diameter,h=cover_depth+2*eps,$fn=64);
+        if(active_cover_artwork!="None") translate([0,0,cover_depth-Cover_artwork_depth])
+            linear_extrude(height=Cover_artwork_depth+eps,convexity=20) cover_artwork_2d();
+    }
+}
+module cover() {
+    color([0.23,0.29,0.36]) cover_base();
+    color("white") cover_artwork();
+}
+module printable_cover(part="Both") {
+    translate([0,0,cover_depth]) rotate([180,0,0]) {
+        if(part=="Base") cover_base();
+        else if(part=="Artwork") color("white") cover_artwork();
+        else cover();
+    }
+}
+module projected_light() {
+    difference() {
+        intersection() {
+            intended_light();
+            // Outer opening edge clips rays when the source is above the aperture.
+            circle(r=h>wall_offset+aperture_top ?
+                Ri*h/(h-wall_offset-aperture_top) : max(Shadow_length*3,r_far*3));
+            // Thicker front rim may clip earlier than the optical sidewall.
+            circle(r=h>wall_offset+aperture_top ?
+                Rf*h/(h-wall_offset-aperture_top) : max(Shadow_length*3,r_far*3));
+        }
+        circle(r=dead);
+        if(Support_bridges) bridge_wedges_2d(max(Shadow_length*3,r_far*3));
+        if(xy_supports) xy_support_shapes();
+    }
+}
+module led_marker() {
+    translate([0,0,h]) color([1,0.62,0.12]) sphere(r=1.3,$fn=24);
+}
+module wall_preview() {
+    extent = Show_grid ? ceil(view_extent/Grid_spacing)*Grid_spacing+Grid_spacing*0.7 : view_extent;
+    color([0.055,0.066,0.08]) translate([-extent,-extent,-1.2]) cube([2*extent,2*extent,1]);
+    color([1,0.83,0.42]) translate([0,0,-0.15]) linear_extrude(height=0.08) projected_light();
+    if(Show_grid) coordinate_grid();
+}
+module coordinate_grid() {
+    n=ceil(view_extent/Grid_spacing);
+    e=n*Grid_spacing;
+    line_width=max(0.35,Grid_spacing*0.025);
+    label_every=max(1,ceil((2*n+1)/31));
+    // Display geometry only; never called by the print outputs.
+    for(i=[-n:n]) {
+        color(i==0 ? [0.35,0.75,1] : [0.32,0.39,0.47,0.55])
+            translate([i*Grid_spacing-line_width/2,-e,0.08]) cube([line_width,2*e,0.06]);
+        color(i==0 ? [0.35,0.75,1] : [0.32,0.39,0.47,0.55])
+            translate([-e,i*Grid_spacing-line_width/2,0.08]) cube([2*e,line_width,0.06]);
+        if(i%label_every==0) color([0.7,0.82,0.9]) translate([i*Grid_spacing,-e-Grid_spacing*0.4,0.08])
+            linear_extrude(0.08) text(str(i*Grid_spacing),size=Grid_spacing*0.2,halign="center");
+        if(i%label_every==0) color([0.7,0.82,0.9]) translate([-e-Grid_spacing*0.15,i*Grid_spacing,0.08])
+            linear_extrude(0.08) text(str(i*Grid_spacing),size=Grid_spacing*0.2,halign="right");
+    }
+    color("cyan") translate([e,2,0.08]) linear_extrude(0.08) text("+X",size=Grid_spacing*0.3);
+    color("cyan") translate([2,e,0.08]) linear_extrude(0.08) text("+Y",size=Grid_spacing*0.3);
+    if(xy_supports) for(i=[0:len(manual_supports)-1]) let(s=manual_supports[i]) if(s[0])
+        for(j=[1:2]) color([1,0.4,0.4]) translate([s[j][0],s[j][1],0.2]) {
+            linear_extrude(0.08) difference() { circle(r=2,$fn=24); circle(r=1.4,$fn=24); }
+            translate([3,3,0]) linear_extrude(0.08) text(str(i+1,j==1 ? "A" : "B"),size=4);
+        }
+}
+module sample_rays() {
+    for(a=[15:60:315]) color([1,0.75,0.2,0.45]) hull() {
+        translate([0,0,h]) sphere(r=0.2,$fn=8);
+        translate([Shadow_x+beam_radius(Shadow_length)*cos(a),Shadow_y+beam_radius(Shadow_length)*sin(a),0]) sphere(r=0.2,$fn=8);
+    }
+}
+module diagnostics() {
+    lines = [str("Artwork: ",active_artwork),
+        valid ? "OPTICAL ENVELOPE: PASS" : "GENERATION NOT POSSIBLE",
+        str("Shadow XY: ",Shadow_x,", ",Shadow_y," mm"),
+        str("LED xyz = 0, 0, ",round(local_h*100)/100," mm (local)"),
+        str("Centre hidden: radius ",round(dead*10)/10," mm"),
+        str("Cut estimate: ",round(cut_estimate(Cylinder_height,Shadow_length)*1000)/1000," mm"),
+        str("Blur estimate: ",round(blur_estimate(Cylinder_height,Shadow_length)*100)/100," mm"),
+        valid ? "Check stencil connectivity before printing." : suggestion_text];
+    for(i=[0:len(lines)-1]) translate([0,-i*6,0])
+        color(valid ? [0.4,0.9,0.6] : [1,0.25,0.15])
+            linear_extrude(height=0.6) text(lines[i],size=4);
+}
+
+if(Output=="Cover") printable_cover();
+else if(Output=="Cover base") printable_cover("Base");
+else if(Output=="Cover artwork") printable_cover("Artwork");
+else if(Output=="Diagnostics") diagnostics();
+else if(!valid) {
+    if(Output=="Body" || Output=="Print layout")
+        assert(false,str("Generation impossible. ",suggestion_text));
+    else diagnostics();
+} else if(Output=="Body") body();
+else if(Output=="Print layout") {
+    body();
+    translate([Cylinder_diameter+10,0,0]) printable_cover();
+} else if(Output=="Projection") {
+    wall_preview();
+    color([0.16,0.19,0.23]) cylinder(r=R,h=1);
+    if(Show_report) translate([-view_extent,-view_extent-Grid_spacing-10,0]) diagnostics();
+} else {
+    wall_preview();
+    color([0.65,0.72,0.77]) translate([0,0,wall_offset]) body();
+    // Exploded cover is display geometry only; optical preview assumes a fitted cover.
+    if(Cover_preview!="Hidden") translate([Cover_preview=="Exploded" ? Cylinder_diameter+10 : 0,0,
+        wall_offset+pitch+(Cover_preview=="Exploded" ? 12 : 0)]) cover();
+    led_marker();
+    if(Show_rays) sample_rays();
+    if(Output=="Stack preview") {
+        // Lower modules are shown as opaque envelopes. Generate their own patterns separately.
+        if(Module_index>0) for(i=[0:Module_index-1])
+            color([0.25,0.3,0.35,0.5]) translate([0,0,i*pitch]) ring(R,Ri,pitch);
+    }
+    if(Show_report) translate([-view_extent,-view_extent-Grid_spacing-10,0]) diagnostics();
+}

@@ -1,0 +1,1 @@
+resize([1,0],auto=true) import("default.svg",center=true);

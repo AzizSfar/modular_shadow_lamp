@@ -1,0 +1,29 @@
+ECHO: "ACTIVE ARTWORK", "Embedded artwork"
+ECHO: "COVER ARTWORK", "Embedded artwork"
+ECHO: "Shadow placement XY mm", [40, 30]
+ECHO: "Pillar through-bore / cover hole mm", [3, 6]
+ECHO: "STATUS", "OPTICAL ENVELOPE PASSES; SVG topology still requires checking"
+ECHO: "LED centre, local XYZ mm", [0, 0, 34]
+ECHO: "LED centre, wall XYZ mm", [0, 0, 34]
+ECHO: "Closed first-module depth / stacking pitch mm", [40, 35.5]
+ECHO: "Central occlusion radius mm", 59.6491
+ECHO: "Conservative artwork radius / smallest declared detail mm", [203, 15]
+ECHO: "Estimated minimum cut / selected minimum mm", [0.594045, 0.4]
+ECHO: "Estimated worst geometric blur / selected maximum mm", [0.645833, 2]
+ECHO: "Translated artwork: LED stays on-axis; height uses a conservative shifted-field bound, not a global XYZ optimum."
+ECHO: "Manual support: wall width / conservative local shell width mm", [12, 0.564391]
+ECHO: "Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it."
+ECHO: "Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here."
+Geometries in cache: 26
+Geometry cache size in bytes: 246416
+CGAL Polyhedrons in cache: 7
+CGAL cache size in bytes: 10618992
+Total rendering time: 0:00:10.629
+   Top level object is a 3D object:
+   Simple:        yes
+   Vertices:     1834
+   Halfedges:    5506
+   Edges:        2753
+   Halffacets:   1838
+   Facets:        919
+   Volumes:         2
