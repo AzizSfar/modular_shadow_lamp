@@ -1,0 +1,27 @@
+ECHO: "ACTIVE ARTWORK", "Embedded artwork"
+ECHO: "COVER ARTWORK", "None"
+ECHO: "Shadow placement XY mm", [0, 0]
+ECHO: "Pillar through-bore / cover hole mm", [3, 0]
+ECHO: "STATUS", "OPTICAL ENVELOPE PASSES; SVG topology still requires checking"
+ECHO: "LED centre, local XYZ mm", [0, 0, 30]
+ECHO: "LED centre, wall XYZ mm", [0, 0, 40]
+ECHO: "Closed first-module depth / stacking pitch mm", [36, 31.5]
+ECHO: "Central occlusion radius mm", 92.3568
+ECHO: "Housing shape / outer XY mm", ["Rectangle", 80, 80]
+ECHO: "Occlusion radius is the corner envelope; Projection uses the actual rectangle."
+ECHO: "Opaque web simplification target / wall-space width mm", [0.6, 44.6184]
+ECHO: "Wall standoff mm / optical back above wall mm", [10, 10]
+ECHO: "A standoff lifts the source and sharpens detail, and widens the hidden centre."
+ECHO: "Conservative artwork radius / smallest declared detail mm", [335.017, 30]
+ECHO: "Estimated minimum cut / selected minimum mm", [0.403421, 0.4]
+ECHO: "Estimated worst geometric blur / selected maximum mm", [1.56325, 2]
+ECHO: "LED XY is the minimax solution for a concentric 360-degree field."
+ECHO: "Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it."
+ECHO: "Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here."
+Geometries in cache: 17
+Geometry cache size in bytes: 103536
+CGAL Polyhedrons in cache: 0
+CGAL cache size in bytes: 0
+Total rendering time: 0:00:00.008
+   Top level object is a 2D object:
+   Contours:        1

@@ -1,0 +1,1 @@
+import("C:/Users/Aziz/Documents/Modular_shadow_lamp/itachi_example.svg",center=true,$fn=180);

@@ -1,0 +1,153 @@
+{
+  "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\monza_example.svg",
+  "output": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\monza_surface.scad",
+  "original_geometry_size_mm": [
+    276.284,
+    474.046
+  ],
+  "polygon_vertices": 1667,
+  "normalized_radius": 0.5583611865177488,
+  "settings": {
+    "Embedded_artwork": true,
+    "Embedded_radius_factor": 0.5583611865177488,
+    "Use_svg": false,
+    "Housing_shape": "Cylinder",
+    "Rectangle_width": 80,
+    "Rectangle_depth": 100,
+    "Minimum_web_width": 0.6,
+    "Bridge_width": 0.9,
+    "Automatic_bridges_only": true,
+    "Shadow_length": 600.0,
+    "Cylinder_diameter": 80.0,
+    "Cylinder_height": 30.0,
+    "Module_index": 0,
+    "Smallest_detail_percent": 5,
+    "Emitter_diameter": 0.2,
+    "Emitter_axial_depth": 0,
+    "Shadow_x": 0,
+    "Shadow_y": 0,
+    "Cover_hole_diameter": 0,
+    "Embedded_cover_artwork": false,
+    "Support_layout": "Radial",
+    "Wall_standoff": 30.0,
+    "Standoff_mode": "Separate ring",
+    "Artwork_mode": "Light shapes"
+  },
+  "detail_measurement": "USER DECLARED; not automatically measured",
+  "validation": "FAILED",
+  "automatic_bridge_angles": [],
+  "automatic_bridge_segments": [
+    [
+      51.23465,
+      16.28678
+    ],
+    [
+      248.09825,
+      17.515449999999998
+    ],
+    [
+      248.2745,
+      17.456979999999998
+    ],
+    [
+      146.01584,
+      11.35784
+    ],
+    [
+      51.38965,
+      16.2155
+    ],
+    [
+      51.74556,
+      16.507649999999998
+    ],
+    [
+      146.22024,
+      11.37154
+    ],
+    [
+      248.4061,
+      17.31709
+    ],
+    [
+      248.04973,
+      17.11292
+    ],
+    [
+      248.13274,
+      17.16791
+    ],
+    [
+      248.31466,
+      17.24738
+    ],
+    [
+      247.86165,
+      17.043219999999998
+    ],
+    [
+      52.13834,
+      15.974889999999998
+    ],
+    [
+      51.95761,
+      16.03649
+    ],
+    [
+      51.59614,
+      16.16101
+    ],
+    [
+      51.47606,
+      16.445050000000002
+    ],
+    [
+      247.77119,
+      16.994899999999998
+    ],
+    [
+      51.68667,
+      16.11928
+    ]
+  ],
+  "cover_artwork": null,
+  "optical_log": "ECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"None\"\nECHO: \"Shadow placement XY mm\", [0, 0]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 0]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 24]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 54]\nECHO: \"Closed first-module depth / stacking pitch mm\", [30, 25.5]\nECHO: \"Central occlusion radius mm\", 116.757\nECHO: \"Housing shape / outer XY mm\", [\"Cylinder\", 80, 80]\nECHO: \"Opaque web simplification target / wall-space width mm\", [0.6, 32.8176]\nECHO: \"Wall standoff mm / optical back above wall mm\", [30, 30]\nECHO: \"A standoff lifts the source and sharpens detail, and widens the hidden centre.\"\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [335.017, 30]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.548486, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [1.56325, 2]\nECHO: \"LED XY is the minimax solution for a concentric 360-degree field.\"\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\n",
+  "surface_preparation": {
+    "method": "Closing in developed inner-shell coordinates, union with original vector light",
+    "shell_sample_pitch_mm": [
+      0.05992998033956432,
+      0.05985915492957746
+    ],
+    "kernel_cells": 11,
+    "changed_surface_cells": 182,
+    "light_surface_cells": 24299,
+    "approximation": "Raster contours mapped back to the wall; narrow necks and overhangs still require slicer review"
+  },
+  "body_mesh": {
+    "triangles": 12116,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 18166,
+      "4": 4
+    },
+    "closed_two_manifold_edges": false,
+    "signed_volume_mm3": 34324.952,
+    "bounds_mm": [
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        0.0,
+        27.979999542236328
+      ]
+    ],
+    "suggested_bridge_angles": [],
+    "suggested_bridge_segments": []
+  },
+  "error": "Mesh preflight failed: inspect the reported components/edges before printing."
+}

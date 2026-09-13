@@ -1,0 +1,76 @@
+{
+  "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\itachi_example.svg",
+  "output": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\itachi_refined.scad",
+  "original_geometry_size_mm": [
+    75.9074,
+    96.4464
+  ],
+  "polygon_vertices": 4577,
+  "normalized_radius": 0.5000706693625946,
+  "settings": {
+    "Embedded_artwork": true,
+    "Embedded_radius_factor": 0.5000706693625946,
+    "Use_svg": false,
+    "Housing_shape": "Cylinder",
+    "Rectangle_width": 80,
+    "Rectangle_depth": 100,
+    "Minimum_web_width": 0.6,
+    "Bridge_width": 0.9,
+    "Automatic_bridges_only": true,
+    "Shadow_length": 600.0,
+    "Cylinder_diameter": 80.0,
+    "Cylinder_height": 30.0,
+    "Module_index": 0,
+    "Smallest_detail_percent": 5,
+    "Emitter_diameter": 0.2,
+    "Emitter_axial_depth": 0,
+    "Shadow_x": 0,
+    "Shadow_y": 0,
+    "Cover_hole_diameter": 0,
+    "Embedded_cover_artwork": false,
+    "Support_layout": "Radial",
+    "Wall_standoff": 30.0,
+    "Standoff_mode": "Separate ring",
+    "Artwork_mode": "Light shapes"
+  },
+  "detail_measurement": "USER DECLARED; not automatically measured",
+  "validation": "FAILED",
+  "automatic_bridge_angles": [],
+  "automatic_bridge_segments": [],
+  "cover_artwork": null,
+  "optical_log": "ECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"None\"\nECHO: \"Shadow placement XY mm\", [0, 0]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 0]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 24]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 54]\nECHO: \"Closed first-module depth / stacking pitch mm\", [30, 25.5]\nECHO: \"Central occlusion radius mm\", 116.757\nECHO: \"Housing shape / outer XY mm\", [\"Cylinder\", 80, 80]\nECHO: \"Opaque web simplification target / wall-space width mm\", [0.6, 26.3232]\nECHO: \"Wall standoff mm / optical back above wall mm\", [30, 30]\nECHO: \"A standoff lifts the source and sharpens detail, and widens the hidden centre.\"\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [300.042, 30]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.683807, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [1.37917, 2]\nECHO: \"LED XY is the minimax solution for a concentric 360-degree field.\"\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\n",
+  "body_mesh": {
+    "triangles": 22656,
+    "surface_components": 2,
+    "edge_incidence_histogram": {
+      "2": 33974,
+      "4": 5
+    },
+    "closed_two_manifold_edges": false,
+    "signed_volume_mm3": 32759.968,
+    "bounds_mm": [
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        0.0,
+        27.98
+      ]
+    ],
+    "suggested_bridge_angles": [
+      288.66664
+    ],
+    "suggested_bridge_segments": [
+      [
+        287.66183,
+        11.65213
+      ]
+    ]
+  },
+  "error": "Mesh preflight failed: inspect the reported components/edges before printing."
+}

@@ -1,6 +1,6 @@
 # Modular shadow lamp
 
-A 100 mm diameter, **30 mm closed-depth** wall lamp, with an SVG-controlled optical sidewall, hollow LED pillar, removable circular cover, keyed stacking joints and a geometric wall-projection preview.
+A wall lamp with a cylindrical or rectangular SVG-controlled optical sidewall, hollow LED pillar, removable cover, keyed stacking joints and a geometric wall-projection preview. The original default remains a 100 mm diameter, **30 mm closed-depth** cylinder.
 
 **Start with `modular_shadow_lamp.scad`.** It contains an original sunburst demo and needs no external library. All dimensions are in millimetres. `OPTICS.md` contains the derivation, assumptions and limits.
 
@@ -36,6 +36,9 @@ python run_local.py --svg "C:/path/to/artwork.svg"
 
 ## Automatic SVG preparation — recommended
 
+For the Itachi and Monza reference investigation, see `DESIGN_REVIEW.md`. New
+preparation controls and the dimension comparison tool are described below.
+
 OpenSCAD imports SVG geometry but does not expose its dimensions, smallest feature or connected components to its scripting language. Consequently, direct MakerWorld mode requires the longer-axis selection and a declared minimum detail, and uses a conservative square envelope. **A pass in direct mode is not a complete SVG printability certificate.**
 
 The included `prepare_svg.py` helper uses OpenSCAD itself to interpret the SVG, then:
@@ -44,7 +47,7 @@ The included `prepare_svg.py` helper uses OpenSCAD itself to interpret the SVG, 
 - calculates a tighter outer-radius bound from the resulting polygons;
 - embeds the artwork into a **single SCAD file** that can be uploaded to MakerWorld;
 - checks the optical limits, exports the actual body mesh, and checks its edge closure and connectivity;
-- adds narrow radial bridges to disconnected stencil islands, rerenders and checks again;
+- adds short vertical ribs underneath disconnected stencil islands, rerenders and checks again;
 - produces a checked body STL, cover STL and JSON report when successful.
 
 From this project folder:
@@ -53,7 +56,7 @@ From this project folder:
 python prepare_svg.py "C:/path/to/artwork.svg" --length 300 --diameter 100 --height 30 --detail-percent 2 --output output/my_lamp.scad
 ```
 
-Python 3 and OpenSCAD are required; the helper itself uses only Python's standard library. It finds the portable OpenSCAD in this project, an installed copy, or the executable given with `--openscad`. The distribution ZIP does not bundle OpenSCAD; [download it here](https://openscad.org/downloads.html) if needed.
+Python 3 and OpenSCAD are required. Default conversion uses the standard library; surface cleanup with `--minimum-web`, the design study and projection comparison also require NumPy and Pillow (already installed here). It finds the portable OpenSCAD in this project, an installed copy, or the executable given with `--openscad`. The distribution ZIP does not bundle OpenSCAD; [download it here](https://openscad.org/downloads.html) if needed.
 
 The result is self-contained: upload `output/my_lamp.scad`. **Automatic** initially selects its embedded artwork. To replace it, select **Artwork_source = SVG file** and upload another SVG, or rerun the helper for automatic sizing and mesh checks. Dimension, source and support settings remain customizable. **Changing them after preflight invalidates the old mesh-check result; rerun the helper before printing the changed design.**
 
@@ -67,9 +70,73 @@ Use `--dark-silhouette` for filled SVG areas to remain dark within a circular li
 
 The helper deliberately does **not** invent a smallest-detail measurement: pointed corners mathematically taper to zero, and a minimum edge length is not a stroke width. `--detail-percent` is the detail you actually require. Automated bridges can change the appearance; inspect Projection after preparation.
 
+## Reference preparation, fragile webs and housing shape
+
+`Housing_shape = "Rectangle"` switches the body, cover, joints, standoff and wall
+footprint together. `Rectangle_width` and `Rectangle_depth` are the two outer XY
+dimensions. `Cylinder_height` remains the closed optical-module depth for either
+shape. The wire pillar and its bore remain circular. Matching parts must share
+the shape and both XY dimensions.
+
+Use this preparation route for the supplied references:
+
+```powershell
+python prepare_svg.py itachi_example.svg --length 800 --diameter 80 --height 44 --wall-standoff 10 --minimum-web 0.6 --bridge-width 0.9 --automatic-bridges-only --output output/itachi_final.scad
+python prepare_svg.py monza_example.svg --length 600 --diameter 80 --height 36 --wall-standoff 10 --minimum-web 0.6 --bridge-width 0.9 --automatic-bridges-only --output output/monza_final.scad
+python prepare_svg.py monza_example.svg --shape Rectangle --rectangle-width 80 --rectangle-depth 80 --length 600 --height 36 --wall-standoff 10 --minimum-web 0.6 --automatic-bridges-only --output output/monza_rectangle_final.scad
+```
+
+These are **comparison prototypes**, using the existing 5% declared-detail
+assumption and a 0.2 mm emitting area. Five percent is not a measurement of either
+SVG's fine details. The new small-aperture screen reports features the 0.4 mm
+filter flags; neither a broad optical pass nor mesh closure certifies that every
+aperture will survive slicing with a 0.4 mm nozzle.
+
+- `--automatic-bridges-only` starts without the twelve regular spokes. Mesh
+  preflight adds vertical ribs only where needed and stops them inside each
+  retained island. Projection includes the finite rib shadows.
+- `--minimum-web 0.6` simplifies thin **opaque** slivers in developed inner-shell
+  coordinates, sampled at about 0.06 mm. Corrections are projected back onto the
+  wall and combined with the original vector light geometry. It does not thicken
+  every stroke. Detached specks smaller than the width cubed (0.216 mm³ here)
+  are removed through their projected footprints; larger islands receive ribs.
+- `--bridge-width 0.9` is a starting point for approximately two extrusion lines
+  with a 0.4 mm nozzle. Use your slicer's actual line-width settings. Simplification
+  may erase dark detail; supports remove light. Check the comparison images.
+- `--minimum-web 0` disables surface simplification. The default remains zero
+  for compatibility. The native SCAD control uses a more conservative wall-space
+  filter when no prepared surface stencil exists; its result is different.
+- After changing geometry or artwork placement in a prepared surface file,
+  rerun the helper. A stale prepared surface blocks Body/Print layout exports.
+  Preview falls back to the native filter and warns; it is not a refreshed preflight.
+- STL preflight welds export coincidences at 0.000001 mm and removes triangles
+  collapsed by that rounding. This fixes export noise, not real disconnected parts.
+
+Compare dimensions and actual artwork visibility:
+
+```powershell
+python compare_designs.py itachi_example.svg monza_example.svg --detail-percent 5 --output output/reference_study_5percent
+python compare_designs.py itachi_example.svg monza_example.svg --detail-percent 2
+python inspect_projection.py output/itachi_final.scad output/monza_final.scad output/monza_rectangle_final.scad --resolution 5000
+```
+
+The bounded study samples 4,320 combinations per reference: housing shape/size,
+optical height, standoff, image length and XY placement. It counts the standoff
+in **total depth**, and ranks `length / total depth / sqrt(footprint area) × visible
+artwork fraction`, with an 85% visibility threshold. This is an explicit trade-off,
+not a global optimum. Area retention does not know which parts of a character
+are important. The 2% study demonstrates how much stricter detail requirements
+can change the answer.
+
+Projection inspection exports original artwork, housing-only clipping, the
+modified footprint and an independent projection of the opaque STL. Its JSON
+separates hidden artwork, removed light, added light and mesh/preview agreement.
+Raster edge coverage affects the last metric, especially on narrow outlines.
+Changing a generated source invalidates the stored mesh fingerprint.
+
 ## What the LED optimization means
 
-The supported layout is a **concentric image surrounding the lamp**, as in the reference. The source is on the cylinder axis: **x = 0, y = 0**. This is the minimax position for a full 360-degree field, giving the most balanced worst-direction resolution. The script analytically maximizes z subject to the upper collar, next module, pillar and source clearances. This is not an unrestricted optimizer for an asymmetric picture placed entirely beside the lamp.
+The supported layout is a **concentric image surrounding the lamp**, as in the reference. The source is on the housing axis: **x = 0, y = 0**. This is the minimax position for a circular 360-degree field in the cylinder; the rectangle uses conservative on-axis bounds. The script analytically maximizes z subject to the upper collar, next module, pillar and source clearances. This is not an unrestricted optimizer for an asymmetric picture placed entirely beside the lamp.
 
 The default demo gives:
 

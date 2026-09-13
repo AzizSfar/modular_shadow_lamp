@@ -1,0 +1,11 @@
+{
+  "source": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\monza_final.scad",
+  "source_height_mm": 40.0,
+  "pixels": 10000,
+  "visible_before_repairs_percent": 97.25,
+  "original_artwork_retained_percent": 97.25,
+  "visible_light_removed_by_repairs_percent": 0.04,
+  "extra_light_percent_of_original_visible": 3.91,
+  "shadow_fidelity_iou": 0.9620265437152583,
+  "mesh_projection_iou": 0.9784310851491927
+}

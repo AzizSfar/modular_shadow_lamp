@@ -1,0 +1,34 @@
+ECHO: "ACTIVE ARTWORK", "Built-in demo"
+ECHO: "COVER ARTWORK", "None"
+ECHO: "Shadow placement XY mm", [0, 0]
+ECHO: "Pillar through-bore / cover hole mm", [3, 0]
+ECHO: "STATUS", "OPTICAL ENVELOPE PASSES; SVG topology still requires checking"
+ECHO: "LED centre, local XYZ mm", [0, 0, 24]
+ECHO: "LED centre, wall XYZ mm", [0, 0, 44]
+ECHO: "Closed first-module depth / stacking pitch mm", [30, 25.5]
+ECHO: "Central occlusion radius mm", 118.919
+ECHO: "Housing shape / outer XY mm", ["Cylinder", 100, 100]
+ECHO: "Opaque web simplification target / wall-space width mm", [0, 0]
+ECHO: "Wall standoff mm / optical back above wall mm", [20, 20]
+ECHO: "A standoff lifts the source and sharpens detail, and widens the hidden centre."
+ECHO: "Conservative artwork radius / smallest declared detail mm", [150, 15]
+ECHO: "Estimated minimum cut / selected minimum mm", [1.408, 0.4]
+ECHO: "Estimated worst geometric blur / selected maximum mm", [0.425, 2]
+ECHO: "LED XY is the minimax solution for a concentric 360-degree field."
+ECHO: "Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it."
+ECHO: "Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here."
+Geometries in cache: 79
+Geometry cache size in bytes: 1050520
+CGAL Polyhedrons in cache: 16
+CGAL cache size in bytes: 26621904
+Total rendering time: 0:01:05.429
+   Top level object is a 3D object:
+   Simple:        yes
+   Vertices:     3902
+   Halfedges:   11720
+   Edges:        5860
+   Halffacets:   3870
+   Facets:       1935
+   Volumes:         2
+
+STL numeric cleanup: removed 8 collapsed triangles at 0.000001 mm vertex precision.

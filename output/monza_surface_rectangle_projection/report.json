@@ -1,0 +1,11 @@
+{
+  "source": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\monza_surface_rectangle.scad",
+  "source_height_mm": 54.0,
+  "pixels": 3000,
+  "visible_before_repairs_percent": 81.84,
+  "original_artwork_retained_percent": 76.62,
+  "visible_light_removed_by_repairs_percent": 6.35,
+  "extra_light_percent_of_original_visible": 0.12,
+  "shadow_fidelity_iou": 0.9353628684709533,
+  "mesh_projection_iou": 0.930949553591063
+}

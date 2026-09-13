@@ -1,0 +1,35 @@
+ECHO: "ACTIVE ARTWORK", "Built-in demo"
+ECHO: "COVER ARTWORK", "None"
+ECHO: "Shadow placement XY mm", [0, 0]
+ECHO: "Pillar through-bore / cover hole mm", [3, 0]
+ECHO: "STATUS", "GENERATION NOT POSSIBLE under the selected limits"
+ECHO: "LED centre, local XYZ mm", [0, 0, 24]
+ECHO: "LED centre, wall XYZ mm", [0, 0, 69.5]
+ECHO: "Closed first-module depth / stacking pitch mm", [30, 25.5]
+ECHO: "Central occlusion radius mm", 187.838
+ECHO: "Housing shape / outer XY mm", ["Cylinder", 100, 100]
+ECHO: "Opaque web simplification target / wall-space width mm", [0, 0]
+ECHO: "Wall standoff mm / optical back above wall mm", [20, 45.5]
+ECHO: "A standoff lifts the source and sharpens detail, and widens the hidden centre."
+ECHO: "Conservative artwork radius / smallest declared detail mm", [150, 15]
+ECHO: "Estimated minimum cut / selected minimum mm", [2.224, 0.4]
+ECHO: "Estimated worst geometric blur / selected maximum mm", [0.425, 2]
+ECHO: "LED XY is the minimax solution for a concentric 360-degree field."
+ECHO: "Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it."
+ECHO: "Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here."
+ECHO: "SUGGESTED sampled compromise [height,shadow] mm", [45, 300]
+ECHO: "Keep height: shadow mm", "No feasible smaller length in range"
+ECHO: "Keep shadow: height mm", 45
+ECHO: "Search: height increases in 1 mm steps, <=300 mm; equal squared relative changes in height and shadow length."
+ERROR: Assertion 'ring_standoff' failed: "The Standoff part needs Wall_standoff > 0, Standoff_mode = Separate ring and Module_index = 0." in file regression_baseline.scad, line 644
+TRACE: called by 'assert' in file regression_baseline.scad, line 644
+TRACE: called by 'if' in file regression_baseline.scad, line 643
+TRACE: called by 'if' in file regression_baseline.scad, line 642
+TRACE: called by 'if' in file regression_baseline.scad, line 641
+TRACE: called by 'if' in file regression_baseline.scad, line 640
+Geometries in cache: 1
+Geometry cache size in bytes: 0
+CGAL Polyhedrons in cache: 0
+CGAL cache size in bytes: 0
+Total rendering time: 0:00:00.000
+Current top level object is empty.

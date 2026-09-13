@@ -215,8 +215,79 @@ Equal relative changes have equal weight. The script additionally reports holdin
 
 ## 8. Structural and optical compromises
 
-Closed luminous outlines can leave opaque material floating inside an opening. Radial bridge wedges connect material to the top and bottom structural rims; their shadows are corresponding dark wedges. Fixed spokes cannot retain every arbitrary island. The helper exports the real body, identifies disconnected surface components, selects an interior point of a large face of each floating component, and adds a bridge at its angular position. It rerenders and checks again, up to a bounded number of attempts. Failure is reported rather than silently discarding an island.
+Closed luminous outlines can leave opaque material floating inside an opening. Fixed spokes cannot retain every arbitrary island. The helper exports the real body and identifies disconnected surface components. It now places vertical ribs under the lowest face of each substantial floating component, stopping inside the island. With surface cleanup enabled, detached specks below `Minimum_web_width^3` cubic millimetres are removed through their projected convex footprints and recorded explicitly in the JSON. It rerenders and checks again, up to eight attempts. Unresolved failures are reported.
 
 Connectivity does not establish ligament strength or physical printability. Bridges necessarily alter the original light pattern. A fully exact SVG containing floating opaque islands needs another support architecture, such as a separate transparent mask substrate, and cannot be promised by a single-material carved shell.
 
 Stacking adds an absolute offset to every ray calculation. Equal-diameter lower modules are behind the current module's rear plate and within its central occlusion envelope. Larger lower modules, external brackets, exposed electronics and light leakage through open cable/screw holes require additional occlusion modelling. Generate each equal-diameter module for its own index and use independent, properly shielded sources.
+
+## 9. Rectangular housing and bounded design study
+
+The cone remains `P(t) = (t*x, t*y, h*(1-t))`; only the housing intersection
+changes. For a face at X=a, a wall point (x,y) maps to `(a, a*y/x, h*(1-a/x))`.
+The inverse is the same perspective projection as for the cylinder. Flat faces
+introduce shear, so using only radial and tangential cylindrical scales would
+overstate the rectangular worst-direction resolution.
+
+For the face map `(x,y) -> (a*y/x, h*(1-a/x))`,
+`|det J| / ||J||F = a*h/(|x|*sqrt(x*x+y*y+h*h))` is a lower bound on the least
+singular value. The implementation conservatively substitutes the minimum inner
+face distance for a and the maximum artwork radius for |x| and hypot(x,y).
+The upper-collar/source bound and blur estimate use the minimum inner radius.
+These are conservative envelope bounds, not an artwork-specific flat-face optimum.
+
+The lower aperture obstruction is the **actual outer footprint**, scaled by
+`h/(h-bottom_absolute)`, combined with the circular pillar obstruction. The
+upper clipping footprint uses the inset front collar. The reported rectangular
+dead radius is a corner envelope; the preview does not black out that full circle.
+Joints and cover use the same rectangular inset profiles as the body.
+
+The standoff enters `off(H) = standoff + module_index*pitch` and the cone origin,
+source, lower and upper aperture planes, body placement and projection. Its
+integration was already correct. The stack display now also offsets lower
+module envelopes by the standoff.
+
+For a fixed total depth, transferring depth from standoff to optical body lowers
+the absolute rear aperture while keeping the ceiling nearly fixed. It can shrink
+the hidden centre markedly. Thus optimizing body height alone encourages an
+unhelpfully tall standoff. `compare_designs.py` counts **body height + standoff**
+and measures filled-SVG area outside the actual footprint. It samples a declared
+finite grid and ranks an explicit compactness/visibility score. Neither the
+score nor the 85% area threshold proves an artistic or global optimum.
+
+## 10. Developed-surface preparation and verification
+
+`--minimum-web` samples light on the developed inner shell at approximately
+0.06 mm pitch, wraps around the seam, and closes narrow opaque slivers there.
+Rectangle faces unroll with their physical perimeter lengths. Only correction
+regions, with one cell of overlap, are mapped back to wall coordinates. The
+original vector light is retained. A small 0.01 mm wall-space closing removes
+numerical tangencies before oblique extrusion. These operations simplify dark
+detail instead of shrinking every bright contour by a worst-case global offset.
+
+Finite ribs extend from the rear collar to their stored local Z. Their maximum
+wall extent is the outer footprint scaled by `h/(h-off-z_top)` (including the
+small Boolean overlap). This keeps the preview consistent with their truncated
+height rather than displaying full-length spokes.
+
+Opening the sampled light mask with a 0.4 mm kernel provides a **small-feature
+screen**, reported as a fraction of inner-shell light area. Corners contribute to
+that fraction; it is not an exact stroke-width measurement, lost-wall area or a
+slicer prediction. The user confirmed a 0.4 mm nozzle. A 0.9 mm rib is a useful
+starting point for two roughly 0.45 mm extrusion lines, consistent with
+[Prusa's line-width guidance](https://help.prusa3d.com/article/layers-and-perimeters_1748).
+Actual line width, layer height, material, overhangs and the LED still need testing.
+
+The surface filter cannot certify minimum neck thickness, self-supporting layers
+or mechanical strength. Connectivity is checked on the final mesh. Export-only
+coincident vertices are welded at 0.000001 mm, with collapsed triangles removed;
+the mesh is then required to have exactly two incident triangles per edge and
+one connected surface. This tiny numerical cleanup is separate from deliberate
+removal of small stencil specks.
+
+`inspect_projection.py` translates STL vertices by the actual body wall offset
+before projecting opaque triangles. It supports both housings, stacked modules
+and both standoff modes. It reports original-area retention, added light,
+support/clipping loss, and STL/analytic intersection-over-union separately.
+Narrow outlines are sensitive to raster edge coverage; inspect the images and
+record resolution alongside the numerical agreement.

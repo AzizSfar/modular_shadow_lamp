@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter, defaultdict
 import json
+import hashlib
 import math
 from pathlib import Path
 import re
@@ -32,15 +33,26 @@ def find_openscad(explicit=None):
 
 
 def run_scad(exe, source, destination, definitions=()):
-    args = [exe, "-o", str(destination)]
+    pending=destination.with_name(destination.stem+'.pending'+destination.suffix)
+    if pending.exists(): pending.unlink()
+    args = [exe, "-o", str(pending)]
+    if destination.suffix.lower()=='.stl':
+        # ASCII's six significant figures can collapse nearby stencil vertices.
+        args += ['--export-format','binstl']
     for definition in definitions:
         args += ["-D", definition]
     args.append(str(source))
     result = subprocess.run(args, capture_output=True, text=True, timeout=600)
     log = result.stdout + result.stderr
     destination.with_suffix(destination.suffix + ".log").write_text(log, encoding="utf-8")
-    if result.returncode or "ERROR:" in log or not destination.exists():
+    if result.returncode or "ERROR:" in log or not pending.exists():
         raise RuntimeError(f"OpenSCAD could not generate {destination.name}:\n{log}")
+    pending.replace(destination)
+    if destination.suffix.lower()=='.stl':
+        removed=clean_stl(destination)
+        if removed:
+            log+=f'\nSTL numeric cleanup: removed {removed} collapsed triangles at 0.000001 mm vertex precision.\n'
+            destination.with_suffix(destination.suffix+'.log').write_text(log,encoding='utf-8')
     return log
 
 
@@ -139,7 +151,42 @@ def triangle_area(triangle):
     return math.sqrt(sum(x*x for x in (u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])))/2
 
 
-def mesh_report(path):
+def clean_stl(path):
+    """Weld export-roundoff coincidences; never remove finite stencil islands."""
+    triangles=read_stl(path)
+    vertices={}; result=[]
+    for triangle in triangles:
+        keys=[tuple(round(x,6) for x in p) for p in triangle]
+        if len(set(keys))<3: continue
+        result.append(tuple(vertices.setdefault(k,p) for k,p in zip(keys,triangle)))
+    removed=len(triangles)-len(result)
+    if not removed: return 0
+    with Path(path).open('wb') as f:
+        f.write(b'OpenSCAD; welded export coincidences at 1e-6 mm'.ljust(80,b'\0'))
+        f.write(struct.pack('<I',len(result)))
+        for a,b,c in result:
+            u=[b[i]-a[i] for i in range(3)]; v=[c[i]-a[i] for i in range(3)]
+            normal=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]]
+            norm=math.sqrt(sum(x*x for x in normal))
+            normal=[x/norm for x in normal] if norm else [0,0,0]
+            f.write(struct.pack('<12fH',*normal,*a,*b,*c,0))
+    return removed
+
+
+def convex_hull(points):
+    points=sorted(set(points))
+    def cross(o,a,b): return (a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0])
+    lower=[]; upper=[]
+    for p in points:
+        while len(lower)>=2 and cross(lower[-2],lower[-1],p)<=0: lower.pop()
+        lower.append(p)
+    for p in reversed(points):
+        while len(upper)>=2 and cross(upper[-2],upper[-1],p)<=0: upper.pop()
+        upper.append(p)
+    return lower[:-1]+upper[:-1]
+
+
+def mesh_report(path, source_height=None, body_wall_z=0, small_volume=0):
     triangles=read_stl(path)
     parents=list(range(len(triangles)))
     def root(i):
@@ -160,19 +207,65 @@ def mesh_report(path):
     groups=defaultdict(list)
     for i in range(len(triangles)):
         groups[root(i)].append(i)
-    components=sorted(groups.values(),key=len,reverse=True)
+    # The printable base is the lowest component, even if an intricate floating
+    # island happens to have more triangles than the base.
+    components=sorted(groups.values(),key=lambda c:(min(p[2] for i in c for p in triangles[i]),-len(c)))
     # A point inside a large face supplies a reliable angle for a bridge to an island.
     extra_angles=[]
+    bridge_segments=[]
+    removed_polygons=[]
     for component in components[1:]:
+        volume_component=abs(sum(
+            a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0])
+            for a,b,c in (triangles[i] for i in component))/6)
+        if source_height is not None and volume_component<small_volume:
+            points=[(source_height*x/(source_height-z-body_wall_z),source_height*y/(source_height-z-body_wall_z))
+                    for i in component for x,y,z in triangles[i] if source_height-z-body_wall_z>0.01]
+            hull=convex_hull(points)
+            if len(hull)>=3:
+                removed_polygons.append(hull)
+                continue
         tri=max((triangles[i] for i in component),key=triangle_area)
         x,y=[sum(p[axis] for p in tri)/3 for axis in (0,1)]
         extra_angles.append(round(math.degrees(math.atan2(y,x))%360,5))
+        # Attach below an island so its support grows continuously from the rear
+        # collar. Stop inside it rather than crossing the full optical height.
+        candidates=[triangles[i] for i in component if triangle_area(triangles[i])>1e-6]
+        low=min(candidates,key=lambda t:sum(p[2] for p in t)/3)
+        x,y,z=[sum(p[axis] for p in low)/3 for axis in (0,1,2)]
+        bridge_segments.append([round(math.degrees(math.atan2(y,x))%360,5),round(z,5)])
     bounds=[[min(p[j] for t in triangles for p in t),max(p[j] for t in triangles for p in t)] for j in range(3)]
     return {"triangles":len(triangles),"surface_components":len(components),
             "edge_incidence_histogram":dict(Counter(len(v) for v in edges.values())),
             "closed_two_manifold_edges":all(len(v)==2 for v in edges.values()),
             "signed_volume_mm3":round(volume,3),"bounds_mm":bounds,
-            "suggested_bridge_angles":extra_angles}
+            "suggested_bridge_angles":extra_angles,"suggested_bridge_segments":bridge_segments,
+            "suggested_removed_polygons":removed_polygons}
+
+
+def prepare_surface(source, output, work, exe, width):
+    """Interpret artwork with the same OpenSCAD code, then filter on the shell."""
+    from stencil_surface import surface_repair, scad_module
+    prefix=source.split('\nif(Output=="Cover")')[0]
+    model=work/'surface_source.scad'
+    model.write_text(prefix+'\necho("SURFACE",[Rx,Ry,h,wall_offset,aperture_bottom,aperture_top,r_far]);\nraw_intended_light();',encoding='utf-8')
+    log=run_scad(exe,model,work/'surface_source.svg')
+    rx,ry,h,wall_offset,bottom,top,rfar=map(float,re.search(r'"SURFACE", \[([^\]]+)\]',log).group(1).split(','))
+    names=['Cylinder_diameter','Rectangle_width','Rectangle_depth','Cylinder_height',
+           'Wall_standoff','Module_index','Shadow_length','Shadow_x','Shadow_y','Artwork_rotation',
+           'Minimum_web_width','Manual_LED_height','Emitter_above_pillar','Pillar_diameter',
+           'Wall_thickness','Joint_depth','Cover_plate','LED_position','Artwork_mode','Dark_field_border','Housing_shape']
+    signature=[json.loads(re.search(r'(?m)^'+name+r'\s*=\s*([^;]+);',source).group(1)) for name in names]
+    groups,metadata=surface_repair(read_flat_svg(work/'surface_source.svg'),signature[-1],rx,ry,h,
+                                   wall_offset,bottom,min(top,h-wall_offset-0.1),width,rfar*1.1,
+                                   wall_thickness=signature[14],
+                                   minimum_cut=json.loads(re.search(r'(?m)^Minimum_cut_width\s*=\s*([^;]+);',source).group(1)))
+    source=re.sub(r'// BEGIN EMBEDDED PRINT LIGHT.*?// END EMBEDDED PRINT LIGHT',
+                  '// BEGIN EMBEDDED PRINT LIGHT\n'+scad_module(groups)+'\n// END EMBEDDED PRINT LIGHT',source,flags=re.S)
+    source=set_value(source,'Embedded_surface_repair',True)
+    source=set_value(source,'Embedded_surface_signature',signature)
+    output.write_text(source,encoding='utf-8')
+    return source,metadata
 
 
 def main():
@@ -180,6 +273,14 @@ def main():
     parser.add_argument("svg",type=Path)
     parser.add_argument("--length",type=float,default=300,help="Longest shadow dimension, mm")
     parser.add_argument("--diameter",type=float,default=100)
+    parser.add_argument("--shape",choices=["Cylinder","Rectangle"],default="Cylinder")
+    parser.add_argument("--rectangle-width",type=float,default=80)
+    parser.add_argument("--rectangle-depth",type=float,default=100)
+    parser.add_argument("--minimum-web",type=float,default=0,
+                        help="Simplify opaque slivers below this approximate shell width, mm; 0 keeps original artwork")
+    parser.add_argument("--bridge-width",type=float,default=0.9)
+    parser.add_argument("--automatic-bridges-only",action="store_true",
+                        help="Start without regular spokes; add short vertical ribs only to disconnected islands")
     parser.add_argument("--height",type=float,default=30,help="Closed single-module depth, mm")
     parser.add_argument("--module-index",type=int,default=0)
     parser.add_argument("--shadow-x",type=float,default=0,help="Artwork centre X on the wall, mm")
@@ -204,6 +305,8 @@ def main():
     args=parser.parse_args()
     if min(args.length,args.diameter,args.height,args.detail_percent)<=0:
         parser.error("Dimensions and detail percentage must be positive")
+    if args.minimum_web<0 or args.bridge_width<=0 or min(args.rectangle_width,args.rectangle_depth)<=0:
+        parser.error("Web width must be non-negative; bridge and rectangle dimensions must be positive")
     exe=find_openscad(args.openscad)
     svg=args.svg.resolve(strict=True)
     output=args.output.resolve()
@@ -231,6 +334,9 @@ def main():
             "// BEGIN EMBEDDED COVER ARTWORK\n"+cover_module+"\n// END EMBEDDED COVER ARTWORK",source,flags=re.S)
         cover_metadata={"input":str(cover_svg),"original_geometry_size_mm":cover_size,"polygon_vertices":cover_vertices}
     values={"Embedded_artwork":True,"Embedded_radius_factor":radius,"Use_svg":False,
+            "Housing_shape":args.shape,"Rectangle_width":args.rectangle_width,"Rectangle_depth":args.rectangle_depth,
+            "Minimum_web_width":args.minimum_web,"Bridge_width":args.bridge_width,
+            "Automatic_bridges_only":args.automatic_bridges_only,
             "Shadow_length":args.length,"Cylinder_diameter":args.diameter,"Cylinder_height":args.height,
             "Module_index":args.module_index,"Smallest_detail_percent":args.detail_percent,
             "Emitter_diameter":args.emitter_diameter,"Emitter_axial_depth":args.emitter_depth,
@@ -257,7 +363,7 @@ def main():
     report={"input":str(svg),"output":str(output),"original_geometry_size_mm":size,
             "polygon_vertices":vertex_count,"normalized_radius":radius,"settings":values,
             "detail_measurement":"USER DECLARED; not automatically measured",
-            "validation":"NOT CHECKED","automatic_bridge_angles":[]}
+            "validation":"NOT CHECKED","automatic_bridge_angles":[],"automatic_bridge_segments":[]}
     report["cover_artwork"]=cover_metadata
     try:
         log=run_scad(exe,output,work/"diagnostics.csg",['Output="Diagnostics"'])
@@ -266,22 +372,35 @@ def main():
             report["validation"]="OPTICAL LIMITS FAILED"
             print(log)
             raise RuntimeError("Optical limits failed. The generated SCAD contains specific suggestions.")
+        if args.minimum_web>0:
+            print('Simplifying fragile opaque slivers on the developed shell surface.',flush=True)
+            source,report['surface_preparation']=prepare_surface(source,output,work,exe,args.minimum_web)
         if not args.skip_mesh_check:
-            for attempt in range(4):
+            for attempt in range(8):
                 mesh=work/f"body_{attempt}.stl"
                 run_scad(exe,output,mesh,['Output="Body"'])
-                result=mesh_report(mesh)
+                world_h=float(re.search(r'"LED centre, wall XYZ mm", \[0, 0, ([^\]]+)\]',log).group(1))
+                base=args.wall_standoff if args.standoff_mode=="Extended body" and args.module_index==0 else 0
+                world_z=float(re.search(r'"Wall standoff mm / optical back above wall mm", \[[^,]+, ([^\]]+)\]',log).group(1))-base
+                result=mesh_report(mesh,world_h,world_z,args.minimum_web**3)
                 report["body_mesh"]=result
                 if result["surface_components"]==1 and result["closed_two_manifold_edges"]:
                     report["validation"]="CONNECTED BODY; CLOSED TWO-MANIFOLD EDGES; OPTICAL ENVELOPE PASSES"
                     shutil.copy2(mesh,output.with_suffix(".stl"))
+                    report['mesh_source_sha256']=hashlib.sha256(output.read_bytes()).hexdigest()
                     break
-                if args.no_auto_bridges or attempt==3 or not result["closed_two_manifold_edges"]:
+                if args.no_auto_bridges or attempt==7 or result['surface_components']==1:
                     raise RuntimeError("Mesh preflight failed: inspect the reported components/edges before printing.")
-                report["automatic_bridge_angles"] += result["suggested_bridge_angles"]
-                source=set_value(source,"Embedded_bridge_angles",report["automatic_bridge_angles"])
+                segments=[[a,z-base+args.bridge_width/2] for a,z in result["suggested_bridge_segments"]]
+                report["automatic_bridge_segments"] += segments
+                source=set_value(source,"Embedded_bridge_segments",report["automatic_bridge_segments"])
+                removed=report.setdefault('removed_tiny_islands',[])
+                removed+=result['suggested_removed_polygons']
+                source=set_value(source,'Embedded_removed_islands',removed)
                 output.write_text(source,encoding="utf-8")
-                print(f"Adding {len(result['suggested_bridge_angles'])} narrow radial bridges to retain floating parts.",flush=True)
+                print(f"Adding {len(segments)} short vertical ribs below floating parts.",flush=True)
+                if result['suggested_removed_polygons']:
+                    print(f"Removing {len(result['suggested_removed_polygons'])} sub-print-size detached specks.",flush=True)
             run_scad(exe,output,work/"cover.stl",['Output="Cover"'])
             report["cover_mesh"]=mesh_report(work/"cover.stl")
             if not report["cover_mesh"]["closed_two_manifold_edges"] or report["cover_mesh"]["surface_components"]!=1:
@@ -303,11 +422,15 @@ def main():
                     shutil.copy2(work/(label+".stl"),output.with_name(output.stem+"_"+label+".stl"))
         print(f"Created: {output}\n{report['validation']}")
         print("Mesh checks do not certify minimum wall thickness, overhangs, joint fit, heat or brightness.")
+        if report.get('surface_preparation',{}).get('light_area_in_small_features_percent',0)>0:
+            print('Small-aperture screen: '+str(report['surface_preparation']['light_area_in_small_features_percent'])+
+                  '% of sampled inner-shell light area lies in features flagged by the 0.4 mm filter. Inspect the slicer.',flush=True)
     except Exception as error:
         report["validation"]="FAILED"
         report["error"]=str(error)
         raise
     finally:
+        report['source_sha256']=hashlib.sha256(output.read_bytes()).hexdigest()
         output.with_suffix(".json").write_text(json.dumps(report,indent=2),encoding="utf-8")
 
 

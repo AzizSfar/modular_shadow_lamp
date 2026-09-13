@@ -33,6 +33,9 @@ Shadow_y = 0; // [-1000:1:1000]
 Smallest_detail_percent = 5; // [0.1:0.1:20]
 
 /* [Cylinder] */
+Housing_shape = "Cylinder"; // [Cylinder,Rectangle]
+Rectangle_width = 80; // [40:1:250]
+Rectangle_depth = 100; // [40:1:250]
 Cylinder_diameter = 100; // [60:1:250]
 // Total closed depth of one module, including its fitted cover.
 Cylinder_height = 30; // [18:0.5:200]
@@ -64,6 +67,11 @@ Support_layout = "Radial"; // [Radial,Manual XY,Radial and XY]
 Bridge_count = 12; // [3:1:48]
 Bridge_width = 0.8; // [0.4:0.1:2]
 Bridge_rotation = 15; // [0:1:180]
+// Helper mode disables the regular spokes and retains only mesh-detected repairs.
+Automatic_bridges_only = false;
+// Simplify narrow opaque strips in wall space using a conservative shell scale.
+// 0 preserves the original geometry. This changes the shadow; inspect Projection.
+Minimum_web_width = 0; // [0:0.1:2]
 
 /* [Manual XY supports] */
 // Segments are specified on the WALL grid. Width is the dark strip width on the wall.
@@ -128,15 +136,27 @@ Embedded_artwork = false;
 Embedded_radius_factor = 0.7071067811865476;
 // Extra bridge angles added by the helper after checking the actual exported mesh.
 Embedded_bridge_angles = [];
+// [angle, local top Z] vertical ribs added only as far as a floating island.
+Embedded_bridge_segments = [];
+Embedded_removed_islands = [];
+Embedded_surface_repair = false;
+Embedded_surface_signature = [];
+// BEGIN EMBEDDED PRINT LIGHT
+module embedded_print_light() {}
+// END EMBEDDED PRINT LIGHT
 // BEGIN EMBEDDED ARTWORK
-module embedded_artwork() { square(1, center=true); }
+module embedded_artwork() { square(1,center=true); }
 // END EMBEDDED ARTWORK
 Embedded_cover_artwork = false;
 // BEGIN EMBEDDED COVER ARTWORK
 module embedded_cover_artwork() { square(1, center=true); }
 // END EMBEDDED COVER ARTWORK
 
-R = Cylinder_diameter/2;
+rectangular = Housing_shape=="Rectangle";
+Rx = rectangular ? Rectangle_width/2 : Cylinder_diameter/2;
+Ry = rectangular ? Rectangle_depth/2 : Cylinder_diameter/2;
+R = min(Rx,Ry);
+Rmax = rectangular ? norm([Rx,Ry]) : R;
 Ri = R-Wall_thickness;
 frame_width = max(4, Wall_thickness+2);
 Rf = R-frame_width;
@@ -177,7 +197,7 @@ function far_radius(L) = offset_radius+beam_radius(L);
 // Potential outer reach, used only as an envelope test (not SVG content analysis).
 function field_reach(L) = offset_radius+L/2;
 r_far = far_radius(Shadow_length);
-radial_supports = Support_bridges && Support_layout!="Manual XY";
+radial_supports = Support_bridges && !Automatic_bridges_only && Support_layout!="Manual XY";
 xy_supports = Support_bridges && Support_layout!="Radial";
 manual_supports = [
     [Support_1_enabled,Support_1_start,Support_1_end,Support_1_width],
@@ -186,9 +206,10 @@ manual_supports = [
     [Support_4_enabled,Support_4_start,Support_4_end,Support_4_width]];
 // Added by mesh preflight even when only manual supports are selected.
 repair_angles = Support_bridges && using_embedded ? Embedded_bridge_angles : [];
+repair_segments = Support_bridges && using_embedded ? Embedded_bridge_segments : [];
 manual_extent = xy_supports ? max(concat([0],[for(s=manual_supports) if(s[0])
     max(abs(s[1][0]),abs(s[1][1]),abs(s[2][0]),abs(s[2][1]))+s[3]])) : 0;
-view_extent = max(R*1.5,abs(Shadow_x)+Shadow_length*0.62,
+view_extent = max(Rmax*1.5,abs(Shadow_x)+Shadow_length*0.62,
     abs(Shadow_y)+Shadow_length*0.62,Show_grid ? manual_extent+10 : 0);
 
 function off(H) = stand + Module_index*(H-cover_depth);
@@ -203,10 +224,14 @@ function auto_source(H,L) = min(ceiling(H),
     Emitter_above_pillar*(field_reach(L)-Minimum_cut_width-eps)/(Pillar_diameter/2));
 function source(H,L) = LED_position=="Manual height" ? off(H)+Manual_LED_height : auto_source(H,L);
 function dead_radius(H,L) = let(h=source(H,L))
-    h>bottom(H) ? max(R*h/(h-bottom(H)), Pillar_diameter/2*h/Emitter_above_pillar) : 1e12;
+    h>bottom(H) ? max(Rmax*h/(h-bottom(H)), Pillar_diameter/2*h/Emitter_above_pillar) : 1e12;
+// For a flat face the inverse map has shear. det(J)/||J||F bounds its least
+// singular value; using the nearest face and farthest artwork radius is safe.
+function shell_scale(H,L) = let(h=source(H,L), r=far_radius(L))
+    rectangular ? h*Ri/(r*sqrt(r*r+h*h)) : min(Ri/r,h*Ri/(r*r));
 // Least local stretch from wall artwork to inner cylindrical surface.
 function cut_estimate(H,L) = let(h=source(H,L), r=far_radius(L))
-    detail_fraction*L*min(Ri/r,h*Ri/(r*r));
+    detail_fraction*L*shell_scale(H,L);
 // Conservative sum of transverse and axial geometric source blur.
 function blur_estimate(H,L) = let(h=source(H,L),r=far_radius(L))
     max(0,r/Ri-1)*(Emitter_diameter+Emitter_axial_depth*r/max(h,eps));
@@ -223,7 +248,9 @@ function quality_ok(H,L) = cut_estimate(H,L)>=Minimum_cut_width-1e-9 &&
 function feasible(H,L) = mechanical_ok(H,L) && quality_ok(H,L) &&
     source(H,L)>bottom(H)+1 && source(H,L)<=ceiling(H)+1e-9 &&
     source(H,L)<=auto_source(H,L)+1e-9 &&
-    field_reach(L)>dead_radius(H,L)+Minimum_cut_width;
+    // A rectangle's corner radius is diagnostic only: light can pass its faces.
+    field_reach(L)>max(R*source(H,L)/(source(H,L)-bottom(H)),
+        Pillar_diameter/2*source(H,L)/Emitter_above_pillar)+Minimum_cut_width;
 // Quality decreases monotonically with L in automatic mode. Search 0.01 mm.
 function max_length(H,lo,hi,n=18) = n==0 ? lo :
     let(mid=(lo+hi)/2) quality_ok(H,mid) ? max_length(H,mid,hi,n-1) : max_length(H,lo,mid,n-1);
@@ -243,6 +270,11 @@ h = source(Cylinder_height,Shadow_length);
 local_h = h-wall_offset;
 dead = dead_radius(Cylinder_height,Shadow_length);
 valid = feasible(Cylinder_height,Shadow_length);
+surface_signature = [Cylinder_diameter,Rectangle_width,Rectangle_depth,Cylinder_height,
+    Wall_standoff,Module_index,Shadow_length,Shadow_x,Shadow_y,Artwork_rotation,
+    Minimum_web_width,Manual_LED_height,Emitter_above_pillar,Pillar_diameter,
+    Wall_thickness,Joint_depth,Cover_plate,LED_position,Artwork_mode,Dark_field_border,Housing_shape];
+surface_repair_current = Embedded_surface_signature==surface_signature;
 // Nearest means this explicitly weighted, bounded grid; never a global claim.
 search_max = min(300,max(160,3*Cylinder_height));
 suggestions = valid || LED_position!="Automatic" ? [] : [
@@ -258,6 +290,11 @@ suggestion_text = is_undef(nearest) ? "No candidate in search range; change diam
     str("Try height ",nearest[0]," mm, shadow ",nearest[1]," mm.");
 
 assert(Cylinder_diameter>0 && Cylinder_height>0 && Shadow_length>0,"Dimensions must be positive.");
+assert(Rectangle_width>0 && Rectangle_depth>0 && Minimum_web_width>=0,"Invalid housing or web dimensions.");
+assert(Housing_shape=="Cylinder" || Housing_shape=="Rectangle","Unknown housing shape.");
+assert(!(using_embedded && Embedded_surface_repair && !surface_repair_current &&
+    (Output=="Body" || Output=="Print layout")),
+    "Prepared surface stencil is stale. Rerun prepare_svg.py with the new dimensions before exporting.");
 assert(Smallest_detail_percent>0 && Minimum_cut_width>0 && Maximum_blur>0,"Quality limits must be positive.");
 assert(Emitter_diameter>=0 && Emitter_axial_depth>=0,"Emitter sizes cannot be negative.");
 assert(Module_index>=0 && Module_index==floor(Module_index),"Module index must be a non-negative integer.");
@@ -290,6 +327,12 @@ echo("LED centre, local XYZ mm",[0,0,local_h]);
 echo("LED centre, wall XYZ mm",[0,0,h]);
 echo("Closed first-module depth / stacking pitch mm",[Cylinder_height,pitch]);
 echo("Central occlusion radius mm",dead);
+echo("Housing shape / outer XY mm",[Housing_shape,2*Rx,2*Ry]);
+if(using_embedded && Embedded_surface_repair && !surface_repair_current)
+    echo("WARNING: surface stencil settings changed. Rerun prepare_svg.py before exporting this body.");
+if(rectangular) echo("Occlusion radius is the corner envelope; Projection uses the actual rectangle.");
+echo("Opaque web simplification target / wall-space width mm",[Minimum_web_width,
+    Minimum_web_width/max(shell_scale(Cylinder_height,Shadow_length),0.000001)]);
 echo("Wall standoff mm / optical back above wall mm",[stand,wall_offset]);
 if(stand>0) echo("A standoff lifts the source and sharpens detail, and widens the hidden centre.");
 echo("Conservative artwork radius / smallest declared detail mm",[r_far,detail_fraction*Shadow_length]);
@@ -332,10 +375,36 @@ module normalized_artwork() {
 module target_artwork() {
     translate(shadow_offset) rotate(Artwork_rotation) scale(Shadow_length) normalized_artwork();
 }
-module intended_light() {
+module raw_intended_light() {
     if(Artwork_mode=="Light shapes") target_artwork();
     else difference() { translate(shadow_offset) circle(r=beam_radius(Shadow_length)); target_artwork(); }
 }
+// Closing the light field removes hairline opaque slivers instead of narrowing
+// every light stroke. Remaining detached solids get real ribs in mesh preflight.
+// This deliberately simplifies dark detail; inspect the measured shadow change.
+// A disk-based filter is not a minimum-neck-width or overhang certificate.
+module intended_light() {
+    w=Minimum_web_width/max(shell_scale(Cylinder_height,Shadow_length),0.000001);
+    if(Minimum_web_width<=0) raw_intended_light();
+    else if(using_embedded && Embedded_surface_repair && surface_repair_current)
+        // Remove sub-0.02 mm wall-space tangencies before oblique extrusion.
+        offset(delta=-0.01) offset(delta=0.01) union() {
+            raw_intended_light();
+            embedded_print_light();
+            for(p=Embedded_removed_islands) offset(delta=0.02) polygon(p);
+        }
+    else union() {
+        raw_intended_light();
+        offset(r=-w/2,$fn=32) offset(r=w/2,$fn=32) raw_intended_light();
+    }
+}
+// All mating profiles use the same physical inset, including rectangular joints.
+module footprint(radius=R) {
+    if(rectangular) square([2*(Rx-R+radius),2*(Ry-R+radius)],center=true);
+    else circle(r=radius);
+}
+module prism(radius,height) { linear_extrude(height=height) footprint(radius); }
+function wall_radius(a) = rectangular ? min(Rx/max(abs(cos(a)),1e-9),Ry/max(abs(sin(a)),1e-9)) : R;
 // A perspective cone. This cuts oblique tunnels through the FULL wall thickness.
 // Cropping the extrusion just below its apex avoids degenerate mesh vertices.
 module perspective_cone() {
@@ -346,9 +415,9 @@ module perspective_cone() {
 }
 module light_cone() { perspective_cone() intended_light(); }
 // These wedges have constant angular width. Their shadows are exactly wedges.
-module bridge_wedges_2d(radius) {
+module bridge_wedges_2d(radius, selected=undef) {
     angle = 2*asin(min(0.99,Bridge_width/(2*Ri)));
-    angles = concat(radial_supports ? [for(a=[0:360/Bridge_count:360-360/Bridge_count]) a+Bridge_rotation] : [],repair_angles);
+    angles = is_undef(selected) ? concat(radial_supports ? [for(a=[0:360/Bridge_count:360-360/Bridge_count]) a+Bridge_rotation] : [],repair_angles) : selected;
     for(a=angles)
         rotate(a)
             // Keep wedges disjoint at the axis: a shared zero-width edge is non-manifold.
@@ -367,32 +436,35 @@ module optical_cutters() {
     difference() {
         intersection() {
             light_cone();
-            translate([0,0,aperture_bottom]) cylinder(r=R+1,h=aperture_top-aperture_bottom);
+            translate([0,0,aperture_bottom]) prism(R+1,aperture_top-aperture_bottom);
         }
         if(Support_bridges) translate([0,0,aperture_bottom-eps])
             linear_extrude(height=aperture_top-aperture_bottom+2*eps)
-                bridge_wedges_2d(R+3);
+                bridge_wedges_2d(Rmax+3);
         if(xy_supports) perspective_cone() xy_support_shapes();
+        for(s=repair_segments) translate([0,0,aperture_bottom-eps])
+            linear_extrude(height=min(s[1],aperture_top)-aperture_bottom+2*eps)
+                bridge_wedges_2d(Rmax+3,[s[0]]);
     }
 }
 module ring(outer,inner,height) {
-    difference() { cylinder(r=outer,h=height); translate([0,0,-eps]) cylinder(r=inner,h=height+2*eps); }
+    difference() { prism(outer,height); translate([0,0,-eps]) prism(inner,height+2*eps); }
 }
 module tongue() {
     ring(tongue_outer,tongue_inner,Joint_depth);
     // Registration key; all modules and their artwork share an angular datum.
-    translate([tongue_outer-0.3,-1,0]) cube([0.7,2,Joint_depth]);
+    translate([Rx-1.4-0.3,-1,0]) cube([0.7,2,Joint_depth]);
 }
 module socket() {
     translate([0,0,-eps]) ring(tongue_outer+Joint_clearance,
         tongue_inner-Joint_clearance,Joint_depth+Joint_clearance+eps);
-    translate([tongue_outer-0.3-Joint_clearance,-1-Joint_clearance,-eps])
+    translate([Rx-1.4-0.3-Joint_clearance,-1-Joint_clearance,-eps])
         cube([0.7+2*Joint_clearance,2+2*Joint_clearance,Joint_depth+Joint_clearance+eps]);
 }
 module retaining_holes() {
     if(Retaining_screws) for(a=[60,180,300]) rotate([0,0,a])
-        translate([R+eps,0,Joint_depth/2]) rotate([0,-90,0])
-            cylinder(d=Screw_pilot_diameter,h=R-tongue_inner+eps,$fn=24);
+        translate([wall_radius(a)+eps,0,Joint_depth/2]) rotate([0,-90,0])
+            cylinder(d=Screw_pilot_diameter,h=(R-tongue_inner+eps)*(rectangular ? sqrt(2) : 1),$fn=24);
 }
 module keyhole(plate=rear_floor) {
     // Two 3.5 mm screw shafts, 7 mm entry heads. Insert then slide lamp down 5 mm.
@@ -406,7 +478,7 @@ module optical_body() {
         union() {
             difference() {
                 union() {
-                    cylinder(r=R,h=rear_floor);
+                    prism(R,rear_floor);
                     ring(R,Ri,pitch);
                     translate([0,0,aperture_top]) ring(R,Rf,front_guard);
                     translate([0,0,pitch-eps]) tongue();
@@ -422,9 +494,9 @@ module optical_body() {
         if(Module_index>0 || ring_standoff) retaining_holes();
         // The pillar is a tube: this bore runs the whole way to the rear cable route.
         translate([0,0,-eps]) cylinder(d=Pillar_wire_bore,h=local_h+eps,$fn=32);
-        if(Module_index==0 && stand==0) for(x=[-R/2,R/2]) translate([x,0,-eps]) keyhole();
+        if(Module_index==0 && stand==0) for(x=[-Rx/2,Rx/2]) translate([x,0,-eps]) keyhole();
         // Rear cable route, contained under the opaque rear floor.
-        translate([-Pillar_wire_bore/2,-R-1,-eps]) cube([Pillar_wire_bore,R+1,1.2]);
+        translate([-Pillar_wire_bore/2,-Ry-1,-eps]) cube([Pillar_wire_bore,Ry+1,1.2]);
     }
 }
 // The electronics compartment between the room wall and the optical back. Its cavity
@@ -434,14 +506,14 @@ module standoff_shell(with_tongue) {
     cavity = min(Ri,tongue_inner-0.8);
     difference() {
         union() {
-            cylinder(r=R,h=stand);
+            prism(R,stand);
             if(with_tongue) translate([0,0,stand-eps]) tongue();
         }
-        if(stand>plate+0.6) translate([0,0,plate]) cylinder(r=cavity,h=stand-plate+eps);
-        for(x=[-R/2,R/2]) translate([x,0,-eps]) keyhole(plate);
+        if(stand>plate+0.6) translate([0,0,plate]) prism(cavity,stand-plate+eps);
+        for(x=[-Rx/2,Rx/2]) translate([x,0,-eps]) keyhole(plate);
         translate([0,0,-eps]) cylinder(d=Pillar_wire_bore,h=plate+2*eps,$fn=32);
         // Rear cable route, contained under the opaque back plate.
-        translate([-Pillar_wire_bore/2,-R-1,-eps]) cube([Pillar_wire_bore,R+1,1.2]);
+        translate([-Pillar_wire_bore/2,-Ry-1,-eps]) cube([Pillar_wire_bore,Ry+1,1.2]);
     }
 }
 module standoff_ring() { standoff_shell(true); }
@@ -452,7 +524,7 @@ module body() {
 module cover_artwork_2d() {
     difference() {
         intersection() {
-            circle(r=R-2);
+            footprint(R-2);
             rotate(Cover_artwork_rotation) scale(Cover_artwork_length) {
                 if(active_cover_artwork=="Embedded artwork") embedded_cover_artwork();
                 else if(active_cover_artwork=="SVG file") {
@@ -470,10 +542,10 @@ module cover_artwork() {
 }
 module cover_base() {
     difference() {
-        cylinder(r=R,h=cover_depth);
+        prism(R,cover_depth);
         socket();
         // Electronics clearance under the opaque lid plate.
-        translate([0,0,-eps]) cylinder(r=Rf,h=Joint_depth+Joint_clearance+eps);
+        translate([0,0,-eps]) prism(Rf,Joint_depth+Joint_clearance+eps);
         retaining_holes();
         if(Cover_hole_diameter>0) translate([0,0,-eps]) cylinder(d=Cover_hole_diameter,h=cover_depth+2*eps,$fn=64);
         if(active_cover_artwork!="None") translate([0,0,cover_depth-Cover_artwork_depth])
@@ -496,15 +568,20 @@ module projected_light() {
         intersection() {
             intended_light();
             // Outer opening edge clips rays when the source is above the aperture.
-            circle(r=h>wall_offset+aperture_top ?
-                Ri*h/(h-wall_offset-aperture_top) : max(Shadow_length*3,r_far*3));
-            // Thicker front rim may clip earlier than the optical sidewall.
-            circle(r=h>wall_offset+aperture_top ?
-                Rf*h/(h-wall_offset-aperture_top) : max(Shadow_length*3,r_far*3));
+            if(h>wall_offset+aperture_top)
+                scale(h/(h-wall_offset-aperture_top)) footprint(Rf);
+            else circle(r=max(Shadow_length*3,r_far*3));
         }
-        circle(r=dead);
+        scale(h/(h-wall_offset-aperture_bottom)) footprint();
+        circle(r=Pillar_diameter/2*h/Emitter_above_pillar);
         if(Support_bridges) bridge_wedges_2d(max(Shadow_length*3,r_far*3));
         if(xy_supports) xy_support_shapes();
+        for(s=repair_segments) intersection() {
+            bridge_wedges_2d(max(Shadow_length*3,r_far*3),[s[0]]);
+            if(h>wall_offset+min(s[1],aperture_top)+eps)
+                scale(h/(h-wall_offset-min(s[1],aperture_top)-eps)) footprint();
+            else circle(r=max(Shadow_length*3,r_far*3));
+        }
     }
 }
 module led_marker() {
@@ -576,25 +653,25 @@ else if(!valid) {
 } else if(Output=="Body") body();
 else if(Output=="Print layout") {
     body();
-    translate([Cylinder_diameter+10,0,0]) printable_cover();
-    if(ring_standoff) translate([0,Cylinder_diameter+10,0]) standoff_ring();
+    translate([2*Rx+10,0,0]) printable_cover();
+    if(ring_standoff) translate([0,2*Ry+10,0]) standoff_ring();
 } else if(Output=="Projection") {
     wall_preview();
-    color([0.16,0.19,0.23]) cylinder(r=R,h=1);
+    color([0.16,0.19,0.23]) prism(R,1);
     if(Show_report) translate([-view_extent,-view_extent-Grid_spacing-10,0]) diagnostics();
 } else {
     wall_preview();
     if(ring_standoff) color([0.42,0.47,0.53]) standoff_ring();
     color([0.65,0.72,0.77]) translate([0,0,body_z]) body();
     // Exploded cover is display geometry only; optical preview assumes a fitted cover.
-    if(Cover_preview!="Hidden") translate([Cover_preview=="Exploded" ? Cylinder_diameter+10 : 0,0,
+    if(Cover_preview!="Hidden") translate([Cover_preview=="Exploded" ? 2*Rx+10 : 0,0,
         wall_offset+pitch+(Cover_preview=="Exploded" ? 12 : 0)]) cover();
     led_marker();
     if(Show_rays) sample_rays();
     if(Output=="Stack preview") {
         // Lower modules are shown as opaque envelopes. Generate their own patterns separately.
         if(Module_index>0) for(i=[0:Module_index-1])
-            color([0.25,0.3,0.35,0.5]) translate([0,0,i*pitch]) ring(R,Ri,pitch);
+            color([0.25,0.3,0.35,0.5]) translate([0,0,stand+i*pitch]) ring(R,Ri,pitch);
     }
     if(Show_report) translate([-view_extent,-view_extent-Grid_spacing-10,0]) diagnostics();
 }

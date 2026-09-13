@@ -1,0 +1,2 @@
+ERROR: Assertion '(!ring_standoff || (Wall_standoff >= Standoff_back))' failed: "A separate standoff ring needs Wall_standoff >= Standoff_back." in file regression_baseline.scad, line 312
+TRACE: called by 'assert' in file regression_baseline.scad, line 312

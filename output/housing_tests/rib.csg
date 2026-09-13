@@ -1,0 +1,77 @@
+group();
+group();
+group();
+group() {
+	difference() {
+		intersection() {
+			group() {
+				group() {
+					group() {
+						group() {
+							group() {
+								multmatrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+									multmatrix([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+										multmatrix([[300, 0, 0, 0], [0, 300, 0, 0], [0, 0, 300, 0], [0, 0, 0, 1]]) {
+											group() {
+												group() {
+													group() {
+														group() {
+															square(size = [1, 1], center = true);
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			group() {
+				multmatrix([[29.3333, 0, 0, 0], [0, 29.3333, 0, 0], [0, 0, 29.3333, 0], [0, 0, 0, 1]]) {
+					group() {
+						group() {
+							circle($fn = 72, $fa = 12, $fs = 2, r = 46);
+						}
+					}
+				}
+			}
+		}
+		multmatrix([[2.37838, 0, 0, 0], [0, 2.37838, 0, 0], [0, 0, 2.37838, 0], [0, 0, 0, 1]]) {
+			group() {
+				group() {
+					circle($fn = 72, $fa = 12, $fs = 2, r = 50);
+				}
+			}
+		}
+		circle($fn = 72, $fa = 12, $fs = 2, r = 58.6667);
+		group() {
+			group() {
+				group();
+			}
+		}
+		group() {
+			intersection() {
+				group() {
+					group() {
+						multmatrix([[0.766044, -0.642788, 0, 0], [0.642788, 0.766044, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]) {
+							polygon(points = [[0.0999965, 0.000833333], [899.969, 7.5], [899.969, -7.5], [0.0999965, -0.000833333]], paths = undef, convexity = 1);
+						}
+					}
+				}
+				group() {
+					multmatrix([[3.67279, 0, 0, 0], [0, 3.67279, 0, 0], [0, 0, 3.67279, 0], [0, 0, 0, 1]]) {
+						group() {
+							group() {
+								circle($fn = 72, $fa = 12, $fs = 2, r = 50);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+

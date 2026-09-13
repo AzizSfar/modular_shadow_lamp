@@ -29,6 +29,12 @@ def main():
     parser.add_argument('--length',type=float,default=300)
     parser.add_argument('--height',type=float,default=30)
     parser.add_argument('--diameter',type=float,default=100)
+    parser.add_argument('--shape',choices=['Cylinder','Rectangle'],default='Cylinder')
+    parser.add_argument('--rectangle-width',type=float,default=80)
+    parser.add_argument('--rectangle-depth',type=float,default=100)
+    parser.add_argument('--wall-standoff',type=float,default=0)
+    parser.add_argument('--minimum-web',type=float,default=0)
+    parser.add_argument('--automatic-bridges-only',action='store_true')
     parser.add_argument('--no-open',action='store_true',help='Prepare only, without opening a window')
     args=parser.parse_args()
     exe=Path(find_openscad())
@@ -51,6 +57,9 @@ def main():
                  '--length',str(args.length),'--height',str(args.height),
                  '--diameter',str(args.diameter),'--output',str(model),'--openscad',str(exe)]
         command+=['--cover-hole',str(args.cover_hole)]
+        for name in ['shape','rectangle_width','rectangle_depth','wall_standoff','minimum_web']:
+            command+=['--'+name.replace('_','-'),str(getattr(args,name))]
+        if args.automatic_bridges_only: command+=['--automatic-bridges-only']
         if cover_svg:
             command+=['--cover-svg',str(cover_svg.resolve(strict=True))]
         result=subprocess.run(command)

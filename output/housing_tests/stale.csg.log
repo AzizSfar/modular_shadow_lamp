@@ -1,0 +1,2 @@
+ERROR: Assertion '!(((using_embedded && Embedded_surface_repair) && !surface_repair_current) && ((Output == "Body") || (Output == "Print layout")))' failed: "Prepared surface stencil is stale. Rerun prepare_svg.py with the new dimensions before exporting." in file stale.scad, line 295
+TRACE: called by 'assert' in file stale.scad, line 295

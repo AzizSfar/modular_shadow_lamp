@@ -1,0 +1,307 @@
+{
+  "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\itachi_example.svg",
+  "output": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\itachi_final.scad",
+  "original_geometry_size_mm": [
+    75.9074,
+    96.4464
+  ],
+  "polygon_vertices": 4577,
+  "normalized_radius": 0.5000706693625946,
+  "settings": {
+    "Embedded_artwork": true,
+    "Embedded_radius_factor": 0.5000706693625946,
+    "Use_svg": false,
+    "Housing_shape": "Cylinder",
+    "Rectangle_width": 80,
+    "Rectangle_depth": 100,
+    "Minimum_web_width": 0.6,
+    "Bridge_width": 0.9,
+    "Automatic_bridges_only": true,
+    "Shadow_length": 800.0,
+    "Cylinder_diameter": 80.0,
+    "Cylinder_height": 44.0,
+    "Module_index": 0,
+    "Smallest_detail_percent": 5,
+    "Emitter_diameter": 0.2,
+    "Emitter_axial_depth": 0,
+    "Shadow_x": 0,
+    "Shadow_y": 0,
+    "Cover_hole_diameter": 0,
+    "Embedded_cover_artwork": false,
+    "Support_layout": "Radial",
+    "Wall_standoff": 10.0,
+    "Standoff_mode": "Separate ring",
+    "Artwork_mode": "Light shapes"
+  },
+  "detail_measurement": "USER DECLARED; not automatically measured",
+  "validation": "CONNECTED BODY; CLOSED TWO-MANIFOLD EDGES; OPTICAL ENVELOPE PASSES",
+  "automatic_bridge_angles": [],
+  "automatic_bridge_segments": [
+    [
+      254.68018,
+      30.18982
+    ],
+    [
+      267.20591,
+      0.45
+    ],
+    [
+      265.42345,
+      25.61084
+    ],
+    [
+      85.67525,
+      21.30191
+    ],
+    [
+      116.15299,
+      25.56195
+    ],
+    [
+      100.82625,
+      21.50445
+    ],
+    [
+      145.541,
+      32.719550000000005
+    ],
+    [
+      211.08272,
+      30.62539
+    ]
+  ],
+  "cover_artwork": null,
+  "optical_log": "ECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"None\"\nECHO: \"Shadow placement XY mm\", [0, 0]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 0]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 38]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 48]\nECHO: \"Closed first-module depth / stacking pitch mm\", [44, 39.5]\nECHO: \"Central occlusion radius mm\", 64\nECHO: \"Housing shape / outer XY mm\", [\"Cylinder\", 80, 80]\nECHO: \"Opaque web simplification target / wall-space width mm\", [0.6, 52.6465]\nECHO: \"Wall standoff mm / optical back above wall mm\", [10, 10]\nECHO: \"A standoff lifts the source and sharpens detail, and widens the hidden centre.\"\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [400.057, 40]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.455871, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [1.90556, 2]\nECHO: \"LED XY is the minimax solution for a concentric 360-degree field.\"\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\n",
+  "surface_preparation": {
+    "method": "Closing in developed inner-shell coordinates, union with original vector light",
+    "shell_sample_pitch_mm": [
+      0.05992998033956432,
+      0.059961315280464215
+    ],
+    "kernel_cells": 11,
+    "changed_surface_cells": 13042,
+    "light_surface_cells": 1363367,
+    "aperture_screen_width_mm": 0.4,
+    "light_area_in_small_features_percent": 0.98,
+    "approximation": "Raster contours mapped back to the wall; narrow necks and overhangs still require slicer review"
+  },
+  "body_mesh": {
+    "triangles": 34412,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 51618
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 32246.779,
+    "bounds_mm": [
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        0.0,
+        41.97999954223633
+      ]
+    ],
+    "suggested_bridge_angles": [],
+    "suggested_bridge_segments": [],
+    "suggested_removed_polygons": []
+  },
+  "removed_tiny_islands": [
+    [
+      [
+        290.89298239481747,
+        105.70322470395874
+      ],
+      [
+        291.0644316660633,
+        105.68848799398485
+      ],
+      [
+        291.0644502680775,
+        105.68848744854631
+      ],
+      [
+        291.0685125974609,
+        105.68901760982746
+      ],
+      [
+        291.6138099779818,
+        105.76174074627625
+      ],
+      [
+        291.61386691025535,
+        105.7617614162746
+      ],
+      [
+        291.8212797120531,
+        105.84716844426093
+      ],
+      [
+        291.8226395788807,
+        105.84811553254092
+      ],
+      [
+        291.9922743351621,
+        105.96926495093501
+      ],
+      [
+        292.03155960516233,
+        106.11696907532802
+      ]
+    ],
+    [
+      [
+        -96.82590734422448,
+        -37.448558637750246
+      ],
+      [
+        -96.80667259622213,
+        -37.498214996136646
+      ],
+      [
+        -96.80666470434761,
+        -37.498211274880184
+      ],
+      [
+        -96.78957726263216,
+        -37.48781086974433
+      ],
+      [
+        -96.78955042700261,
+        -37.48779259587127
+      ],
+      [
+        -96.6660074728386,
+        -37.3867325137853
+      ],
+      [
+        -96.66601214833798,
+        -37.38673197845156
+      ]
+    ],
+    [
+      [
+        298.38141229664274,
+        83.99987065696101
+      ],
+      [
+        298.3814264689674,
+        83.99986773944671
+      ],
+      [
+        299.54647291642664,
+        84.32784196416193
+      ],
+      [
+        299.5465074110796,
+        84.32785899981728
+      ],
+      [
+        299.0112194340561,
+        84.30176638725335
+      ],
+      [
+        299.0111045989544,
+        84.3017306020395
+      ],
+      [
+        298.5628973742805,
+        84.13211640568638
+      ],
+      [
+        298.55950423839323,
+        84.13083030467385
+      ],
+      [
+        298.38264282309115,
+        84.00078345288381
+      ]
+    ],
+    [
+      [
+        -296.94304457440234,
+        87.14408862451414
+      ],
+      [
+        -296.4598490338776,
+        87.00228650043879
+      ],
+      [
+        -296.4601203523719,
+        87.00614944786798
+      ],
+      [
+        -296.50871633046984,
+        87.52437074230583
+      ],
+      [
+        -296.508803749714,
+        87.52439080202045
+      ],
+      [
+        -296.5120724651832,
+        87.52158132190245
+      ]
+    ]
+  ],
+  "cover_mesh": {
+    "triangles": 3364,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 5046
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 10326.796,
+    "bounds_mm": [
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        0.0,
+        4.5
+      ]
+    ],
+    "suggested_bridge_angles": [],
+    "suggested_bridge_segments": [],
+    "suggested_removed_polygons": []
+  },
+  "standoff_mesh": {
+    "triangles": 3376,
+    "surface_components": 1,
+    "edge_incidence_histogram": {
+      "2": 5064
+    },
+    "closed_two_manifold_edges": true,
+    "signed_volume_mm3": 21935.916,
+    "bounds_mm": [
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        -40.0,
+        40.0
+      ],
+      [
+        0.0,
+        12.479999542236328
+      ]
+    ],
+    "suggested_bridge_angles": [],
+    "suggested_bridge_segments": [],
+    "suggested_removed_polygons": []
+  },
+  "source_sha256": "b534eb507f2a85230554537a741ea93df2d61ba55041efb9005df0b368f0545e",
+  "mesh_source_sha256": "b534eb507f2a85230554537a741ea93df2d61ba55041efb9005df0b368f0545e",
+  "numeric_cleanup": "Four collapsed export triangles removed at 0.000001 mm welding precision"
+}

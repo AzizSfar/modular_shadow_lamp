@@ -1,0 +1,10 @@
+{
+  "source": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\itachi_surface.scad",
+  "source_height_mm": 54.0,
+  "pixels": 2400,
+  "visible_before_repairs_percent": 51.09,
+  "original_artwork_retained_percent": 51.03,
+  "visible_light_removed_by_repairs_percent": 0.12,
+  "extra_light_percent_of_original_visible": 9.13,
+  "shadow_fidelity_iou": 0.9151572439516644
+}

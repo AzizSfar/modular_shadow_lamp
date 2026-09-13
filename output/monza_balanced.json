@@ -1,0 +1,56 @@
+{
+  "input": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\monza_example.svg",
+  "output": "C:\\Users\\Aziz\\Documents\\Modular_shadow_lamp\\output\\monza_balanced.scad",
+  "original_geometry_size_mm": [
+    276.284,
+    474.046
+  ],
+  "polygon_vertices": 1667,
+  "normalized_radius": 0.5583611865177488,
+  "settings": {
+    "Embedded_artwork": true,
+    "Embedded_radius_factor": 0.5583611865177488,
+    "Use_svg": false,
+    "Housing_shape": "Cylinder",
+    "Rectangle_width": 80,
+    "Rectangle_depth": 100,
+    "Minimum_web_width": 0.6,
+    "Bridge_width": 0.9,
+    "Automatic_bridges_only": true,
+    "Shadow_length": 600.0,
+    "Cylinder_diameter": 80.0,
+    "Cylinder_height": 36.0,
+    "Module_index": 0,
+    "Smallest_detail_percent": 5,
+    "Emitter_diameter": 0.2,
+    "Emitter_axial_depth": 0,
+    "Shadow_x": 0,
+    "Shadow_y": 0,
+    "Cover_hole_diameter": 0,
+    "Embedded_cover_artwork": false,
+    "Support_layout": "Radial",
+    "Wall_standoff": 10.0,
+    "Standoff_mode": "Separate ring",
+    "Artwork_mode": "Light shapes"
+  },
+  "detail_measurement": "USER DECLARED; not automatically measured",
+  "validation": "FAILED",
+  "automatic_bridge_angles": [],
+  "automatic_bridge_segments": [],
+  "cover_artwork": null,
+  "optical_log": "ECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"None\"\nECHO: \"Shadow placement XY mm\", [0, 0]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 0]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 30]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 40]\nECHO: \"Closed first-module depth / stacking pitch mm\", [36, 31.5]\nECHO: \"Central occlusion radius mm\", 65.3061\nECHO: \"Housing shape / outer XY mm\", [\"Cylinder\", 80, 80]\nECHO: \"Opaque web simplification target / wall-space width mm\", [0.6, 44.3038]\nECHO: \"Wall standoff mm / optical back above wall mm\", [10, 10]\nECHO: \"A standoff lifts the source and sharpens detail, and widens the hidden centre.\"\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [335.017, 30]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.406286, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [1.56325, 2]\nECHO: \"LED XY is the minimax solution for a concentric 360-degree field.\"\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\n",
+  "surface_preparation": {
+    "method": "Closing in developed inner-shell coordinates, union with original vector light",
+    "shell_sample_pitch_mm": [
+      0.05992998033956432,
+      0.059895833333333336
+    ],
+    "kernel_cells": 11,
+    "changed_surface_cells": 415,
+    "light_surface_cells": 67838,
+    "aperture_screen_width_mm": 0.4,
+    "light_area_in_small_features_percent": 12.6,
+    "approximation": "Raster contours mapped back to the wall; narrow necks and overhangs still require slicer review"
+  },
+  "error": "OpenSCAD could not generate body_0.stl:\nECHO: \"ACTIVE ARTWORK\", \"Embedded artwork\"\nECHO: \"COVER ARTWORK\", \"None\"\nECHO: \"Shadow placement XY mm\", [0, 0]\nECHO: \"Pillar through-bore / cover hole mm\", [3, 0]\nECHO: \"STATUS\", \"OPTICAL ENVELOPE PASSES; SVG topology still requires checking\"\nECHO: \"LED centre, local XYZ mm\", [0, 0, 30]\nECHO: \"LED centre, wall XYZ mm\", [0, 0, 40]\nECHO: \"Closed first-module depth / stacking pitch mm\", [36, 31.5]\nECHO: \"Central occlusion radius mm\", 65.3061\nECHO: \"Housing shape / outer XY mm\", [\"Cylinder\", 80, 80]\nECHO: \"Opaque web simplification target / wall-space width mm\", [0.6, 44.3038]\nECHO: \"Wall standoff mm / optical back above wall mm\", [10, 10]\nECHO: \"A standoff lifts the source and sharpens detail, and widens the hidden centre.\"\nECHO: \"Conservative artwork radius / smallest declared detail mm\", [335.017, 30]\nECHO: \"Estimated minimum cut / selected minimum mm\", [0.406286, 0.4]\nECHO: \"Estimated worst geometric blur / selected maximum mm\", [1.56325, 2]\nECHO: \"LED XY is the minimax solution for a concentric 360-degree field.\"\nECHO: \"Preview is an ideal geometric footprint, not a photometric simulation. Source extent can only worsen it.\"\nECHO: \"Centre is intentionally occluded; support spokes intentionally remove light. Floating islands are not auto-detected here.\"\nERROR: CGAL error in CGALUtils::applyBinaryOperator intersection: CGAL ERROR: assertion violation!\nExpr: target(s1).vertex()==target(s2).vertex()\nFile: /mxe/usr/x86_64-w64-mingw32.static.posix/include/CGAL/Nef_3/SNC_FM_decorator.h\nLine: 227\nGeometries in cache: 50\nGeometry cache size in bytes: 1758856\nCGAL Polyhedrons in cache: 16\nCGAL cache size in bytes: 50046048\nTotal rendering time: 0:02:25.572\n   Top level object is a 3D object:\n   Simple:        yes\n   Vertices:     8260\n   Halfedges:   24786\n   Edges:       12393\n   Halffacets:   8340\n   Facets:       4170\n   Volumes:        23\n"
+}
