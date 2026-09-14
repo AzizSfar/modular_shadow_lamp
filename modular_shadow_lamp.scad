@@ -17,7 +17,7 @@ Grid_spacing = 25; // [5:5:100]
 Artwork_source = "Automatic"; // [Automatic,SVG file,Built-in demo,Embedded artwork]
 // MakerWorld recognizes this variable as an SVG upload control.
 Svg_file = "default.svg";
-// Select the LONGER artwork axis. The other axis scales proportionally.
+// Which axis Shadow_length sets. Name the LONGER one, or the image is cropped square.
 Svg_long_axis = "Y"; // [X,Y]
 // Longest dimension of the complete artwork BEFORE central occlusion, in mm.
 Shadow_length = 300; // [100:5:1500]
@@ -25,6 +25,21 @@ Shadow_length = 300; // [100:5:1500]
 Artwork_mode = "Light shapes"; // [Light shapes,Dark silhouette]
 // Small lit border around the dark silhouette field; avoids tangential, invalid cuts.
 Dark_field_border = 3; // [0.5:0.5:20]
+// Dark silhouette only: bound the lit field to a band round the shadow.
+Light_limit = false;
+// Same as shadow follows the outline; Circle and Rectangle wrap its bounding circle and box.
+Light_limit_shape = "Same as shadow"; // [Same as shadow,Circle,Rectangle]
+// Band width on the WALL, mm. Diagnostics reports the slot it opens in the shell.
+Light_limit_thickness = 25; // [1:0.5:300]
+// Bound the light OUTSIDE the artwork's silhouette.
+Light_limit_outside = true;
+// Off leaves an enclosed interior fully lit. NEEDS a prepared SVG or Interior_span below.
+Light_limit_inside = true;
+// Only used when the artwork carries no measured silhouette. Too small silently finds
+// nothing, so the automatic value is Shadow_length: an enclosed area cannot be wider
+// than the artwork itself, which makes it the one setting that can never under-fill.
+// Widest enclosed area to treat as interior, mm. 0 = automatic (Shadow_length).
+Interior_span = 0; // [0:5:1000]
 Artwork_rotation = 0; // [-180:1:180]
 Shadow_x = 0; // [-1000:1:1000]
 Shadow_y = 0; // [-1000:1:1000]
@@ -53,6 +68,9 @@ Emitter_diameter = 0.2; // [0:0.01:5]
 Emitter_axial_depth = 0; // [0:0.01:2]
 Maximum_blur = 2; // [0.1:0.1:20]
 Minimum_cut_width = 0.4; // [0.15:0.05:2]
+// Cut width and blur are print-quality judgements, not geometry: the part builds either
+// way. Refuse restores the old behaviour of blocking the export when they are missed.
+Quality_limits = "Warn"; // [Warn,Refuse]
 // Emitting centre above the end of the printed pillar; measure your LED assembly.
 Emitter_above_pillar = 3; // [1:0.1:10]
 Pillar_diameter = 8; // [4:0.5:20]
@@ -105,12 +123,10 @@ Cover_artwork_depth = 0.6; // [0.2:0.1:1.2]
 Cover_hole_diameter = 0; // [0:0.1:20]
 
 /* [Mounting] */
-// Clear gap held between the room wall and this module's back. 0 = flush to the wall.
-// The gap is a closed compartment for the electronics. A standoff lifts the source,
-// so the reachable image grows -- but the hidden centre widens at a similar rate.
+// A standoff lifts the source, so the image grows -- and so does the hidden centre.
+// Gap between the room wall and this module's back, mm. 0 = flush. Holds the electronics.
 Wall_standoff = 0; // [0:0.5:200]
-// Separate ring prints the gap as its own part that plugs into the rear socket.
-// Extended body grows the body backwards instead, as one piece with no extra joint.
+// Separate ring prints the gap as its own part; Extended body grows the body backwards.
 Standoff_mode = "Separate ring"; // [Separate ring,Extended body]
 // Back plate of the compartment. It carries the keyholes and the cable route.
 Standoff_back = 3; // [1.5:0.1:8]
@@ -134,6 +150,15 @@ eps = 0.02;
 // prepare_svg.py replaces this block with normalized, embedded SVG geometry.
 Embedded_artwork = false;
 Embedded_radius_factor = 0.7071067811865476;
+// Artwork width and height as fractions of its longest side; the longer one is 1.
+// Only the helper can measure this, so a directly imported SVG falls back to a square.
+Embedded_extent = [1,1];
+// The artwork's silhouette: its outermost contours with every hole filled in. Only the
+// helper can work out which contours are holes, so a direct SVG import has none.
+Embedded_outline = false;
+// BEGIN ARTWORK SILHOUETTE
+module embedded_artwork_outline() { square(1,center=true); }
+// END ARTWORK SILHOUETTE
 // Extra bridge angles added by the helper after checking the actual exported mesh.
 Embedded_bridge_angles = [];
 // [angle, local top Z] vertical ribs added only as far as a floating island.
@@ -192,7 +217,30 @@ k = using_embedded ? Embedded_radius_factor : (using_svg ? sqrt(2)/2 : 0.5);
 detail_fraction = Smallest_detail_percent/100;
 shadow_offset = [Shadow_x,Shadow_y];
 offset_radius = norm(shadow_offset);
-function beam_radius(L) = k*L+(Artwork_mode=="Dark silhouette" ? Dark_field_border : 0);
+light_limit_on = Artwork_mode=="Dark silhouette" && Light_limit;
+// Half width and height of the artwork on the wall, before the band is added.
+function art_half(L) = (using_embedded ? Embedded_extent : [1,1])*L/2;
+// Outer reach of the lit band. A rectangle reaches furthest at its corners.
+function limit_radius(L) = Light_limit_shape=="Rectangle"
+    ? norm(art_half(L)+[Light_limit_thickness,Light_limit_thickness])
+    : k*L+Light_limit_thickness;
+// A measured silhouette is exact. A closing is an approximation, within about 1% of it
+// on a single closed outline once the span clears the enclosed area's width.
+outline_known = using_embedded && Embedded_outline;
+// An enclosed area cannot be wider than the artwork, so Shadow_length always clears it.
+interior_span = Interior_span>0 ? Interior_span : Shadow_length;
+inside_limited = Light_limit_inside;
+function beam_radius(L) = light_limit_on && Light_limit_outside ? limit_radius(L)
+    : k*L+(Artwork_mode=="Dark silhouette" ? Dark_field_border : 0);
+// The band width is a KNOWN feature, unlike Smallest_detail_percent which is declared.
+function limit_cut(H,L) = let(h=source(H,L), r=far_radius(L))
+    Light_limit_thickness*min(Ri/r,h*Ri/(r*r));
+// Thinnest band that still opens a Minimum_cut_width slot. Its own reach depends on
+// the band, so this settles by repeated substitution rather than in closed form.
+function limit_needed(H,L,T=1,n=14) = n==0 ? T :
+    let(r=offset_radius+(Light_limit_shape=="Rectangle" ? norm(art_half(L)+[T,T]) : k*L+T),
+        h=source(H,L))
+    limit_needed(H,L,Minimum_cut_width/min(Ri/r,h*Ri/(r*r)),n-1);
 function far_radius(L) = offset_radius+beam_radius(L);
 // Potential outer reach, used only as an envelope test (not SVG content analysis).
 function field_reach(L) = offset_radius+L/2;
@@ -209,8 +257,10 @@ repair_angles = Support_bridges && using_embedded ? Embedded_bridge_angles : [];
 repair_segments = Support_bridges && using_embedded ? Embedded_bridge_segments : [];
 manual_extent = xy_supports ? max(concat([0],[for(s=manual_supports) if(s[0])
     max(abs(s[1][0]),abs(s[1][1]),abs(s[2][0]),abs(s[2][1]))+s[3]])) : 0;
+// The dark board has to reach past the footprint, or the projection appears to run off
+// the edge of the preview and reads as a clipped shadow.
 view_extent = max(Rmax*1.5,abs(Shadow_x)+Shadow_length*0.62,
-    abs(Shadow_y)+Shadow_length*0.62,Show_grid ? manual_extent+10 : 0);
+    abs(Shadow_y)+Shadow_length*0.62,1.05*r_far,Show_grid ? manual_extent+10 : 0);
 
 function off(H) = stand + Module_index*(H-cover_depth);
 function top(H) = off(H)+H-cover_depth-front_guard;
@@ -245,12 +295,16 @@ function mechanical_ok(H,L) =
     source(H,L)-off(H)-Emitter_above_pillar>rear_floor+1;
 function quality_ok(H,L) = cut_estimate(H,L)>=Minimum_cut_width-1e-9 &&
     blur_estimate(H,L)<=Maximum_blur+1e-9;
-function feasible(H,L) = mechanical_ok(H,L) && quality_ok(H,L) &&
+// Hard geometry. Below this the part is malformed, or the whole image falls inside the
+// occluded centre and there is nothing left to project. No warning can rescue it.
+function buildable(H,L) = mechanical_ok(H,L) &&
     source(H,L)>bottom(H)+1 && source(H,L)<=ceiling(H)+1e-9 &&
     source(H,L)<=auto_source(H,L)+1e-9 &&
     // A rectangle's corner radius is diagnostic only: light can pass its faces.
     field_reach(L)>max(R*source(H,L)/(source(H,L)-bottom(H)),
         Pillar_diameter/2*source(H,L)/Emitter_above_pillar)+Minimum_cut_width;
+// Buildable AND worth printing. The suggestion search still targets this.
+function feasible(H,L) = buildable(H,L) && quality_ok(H,L);
 // Quality decreases monotonically with L in automatic mode. Search 0.01 mm.
 function max_length(H,lo,hi,n=18) = n==0 ? lo :
     let(mid=(lo+hi)/2) quality_ok(H,mid) ? max_length(H,mid,hi,n-1) : max_length(H,lo,mid,n-1);
@@ -270,10 +324,16 @@ h = source(Cylinder_height,Shadow_length);
 local_h = h-wall_offset;
 dead = dead_radius(Cylinder_height,Shadow_length);
 valid = feasible(Cylinder_height,Shadow_length);
+can_build = buildable(Cylinder_height,Shadow_length);
+// Missing a quality limit no longer blocks the export unless you ask it to.
+export_ok = can_build && (valid || Quality_limits=="Warn");
+quality_warning = can_build && !valid;
 surface_signature = [Cylinder_diameter,Rectangle_width,Rectangle_depth,Cylinder_height,
     Wall_standoff,Module_index,Shadow_length,Shadow_x,Shadow_y,Artwork_rotation,
     Minimum_web_width,Manual_LED_height,Emitter_above_pillar,Pillar_diameter,
-    Wall_thickness,Joint_depth,Cover_plate,LED_position,Artwork_mode,Dark_field_border,Housing_shape];
+    Wall_thickness,Joint_depth,Cover_plate,LED_position,Artwork_mode,Dark_field_border,Housing_shape,
+    Light_limit,Light_limit_shape,Light_limit_thickness,Light_limit_outside,Light_limit_inside,
+    Interior_span];
 surface_repair_current = Embedded_surface_signature==surface_signature;
 // Nearest means this explicitly weighted, bounded grid; never a global claim.
 search_max = min(300,max(160,3*Cylinder_height));
@@ -308,6 +368,8 @@ assert(active_cover_artwork=="None" || (Cover_artwork_depth>0 && Cover_artwork_d
     "Inlay must leave at least 0.5 mm of solid cover under it.");
 assert(Cover_artwork_length>0 && Grid_spacing>0,"Artwork length and grid spacing must be positive.");
 assert(Dark_field_border>0,"The dark silhouette field needs a positive border for a valid stencil.");
+assert(Light_limit_thickness>0,"The light limit band must have a positive thickness.");
+assert(Interior_span>=0,"Interior_span cannot be negative.");
 assert(Wall_standoff>=0 && Standoff_back>0,"Standoff values must be valid.");
 assert(!ring_standoff || Wall_standoff>=Standoff_back,
     "A separate standoff ring needs Wall_standoff >= Standoff_back.");
@@ -320,13 +382,46 @@ echo("ACTIVE ARTWORK",active_artwork);
 if(using_svg) echo("SVG PATH",Svg_file);
 echo("COVER ARTWORK",active_cover_artwork);
 echo("Shadow placement XY mm",shadow_offset);
+if(using_svg) echo(str("A direct import is clamped to a ",Shadow_length,
+    " mm square. A crop on two sides means Svg_long_axis names the shorter axis."));
 echo("Pillar through-bore / cover hole mm",[Pillar_wire_bore,Cover_hole_diameter]);
 echo("STATUS", valid ? "OPTICAL ENVELOPE PASSES; SVG topology still requires checking" :
-    "GENERATION NOT POSSIBLE under the selected limits");
+    can_build ? "BUILDS, BELOW QUALITY LIMITS; see the warning" :
+    "GENERATION NOT POSSIBLE: the geometry itself cannot be built");
+if(quality_warning) {
+    echo(str("WARNING: this builds, but ",
+        cut_estimate(Cylinder_height,Shadow_length)<Minimum_cut_width-1e-9
+            ? str("the smallest cut is ",
+                round(cut_estimate(Cylinder_height,Shadow_length)*1000)/1000,
+                " mm against a ",Minimum_cut_width," mm minimum. ") : "",
+        blur_estimate(Cylinder_height,Shadow_length)>Maximum_blur+1e-9
+            ? str("Blur is ",round(blur_estimate(Cylinder_height,Shadow_length)*100)/100,
+                " mm against a ",Maximum_blur," mm maximum. ") : "",
+        "Fine detail will be lost or unprintable. ",suggestion_text));
+    echo("Set Quality_limits = Refuse to block the export instead of warning.");
+}
 echo("LED centre, local XYZ mm",[0,0,local_h]);
 echo("LED centre, wall XYZ mm",[0,0,h]);
 echo("Closed first-module depth / stacking pitch mm",[Cylinder_height,pitch]);
 echo("Central occlusion radius mm",dead);
+if(light_limit_on) {
+    echo("Light limit shape / band mm / slot in shell mm",
+        [Light_limit_shape,Light_limit_thickness,limit_cut(Cylinder_height,Shadow_length)]);
+    // Deliberately advisory: a band too fine to print still builds, so you can preview it.
+    if(limit_cut(Cylinder_height,Shadow_length)<Minimum_cut_width)
+        echo(str("WARNING: a ",Light_limit_thickness," mm light band opens only ",
+            round(limit_cut(Cylinder_height,Shadow_length)*1000)/1000,
+            " mm in the shell, under the ",Minimum_cut_width," mm minimum. About ",
+            round(limit_needed(Cylinder_height,Shadow_length)*10)/10,
+            " mm would clear it. Building anyway."));
+    echo("Light limited outside / inside",[Light_limit_outside,inside_limited]);
+    if(outline_known) echo("Interior taken from the measured silhouette.");
+    else echo(str("Interior closed at ",interior_span," mm span",
+        Interior_span>0 ? " (set)" : " (automatic)",
+        ": an approximation, about 1% off a measured silhouette. ",
+        "If an enclosed area did not light up, raise it; prepare the SVG for an exact one."));
+    echo("A closed band detaches every shape inside it; keep supports or bridges on.");
+}
 echo("Housing shape / outer XY mm",[Housing_shape,2*Rx,2*Ry]);
 if(using_embedded && Embedded_surface_repair && !surface_repair_current)
     echo("WARNING: surface stencil settings changed. Rerun prepare_svg.py before exporting this body.");
@@ -365,19 +460,68 @@ module demo_artwork() {
             translate([0.46,0]) circle(r=0.04,$fn=16);
         }
 }
+// resize() normalises the DECLARED long axis, so naming the shorter one makes the other
+// axis overshoot the unit box while k, and every estimate built on it, still assumes a
+// unit square. Clamping keeps the optics honest and turns a wrong declaration into a
+// visible straight-edged crop instead of silently wrong feasibility numbers. It is a
+// no-op whenever the declaration is right, since the artwork already fits.
 module normalized_artwork() {
-    if(using_svg) {
+    if(using_svg) intersection() {
         if(Svg_long_axis=="X") resize([1,0],auto=true) import(file=Svg_file,center=true,convexity=20);
         else resize([0,1],auto=true) import(file=Svg_file,center=true,convexity=20);
-    } else if(using_embedded) embedded_artwork();
+        square(1,center=true);
+    }
+    else if(using_embedded) embedded_artwork();
     else demo_artwork();
 }
 module target_artwork() {
     translate(shadow_offset) rotate(Artwork_rotation) scale(Shadow_length) normalized_artwork();
 }
+// The lit region before the shadow is punched out of it. Unlimited, this is the whole
+// beam disc; limited, it is the artwork grown by the band thickness.
+// The artwork with its holes filled in: everything the silhouette encloses.
+module target_outline() {
+    if(outline_known)
+        translate(shadow_offset) rotate(Artwork_rotation)
+            scale(Shadow_length) embedded_artwork_outline();
+    // Dilate then erode. Enclosed areas narrower than the span close up; the outer
+    // boundary returns to where it was, so only concave pockets narrower than the span
+    // are wrongly absorbed. Mitred joins: rounding would pull the outer boundary in.
+    else offset(delta=-interior_span/2) offset(delta=interior_span/2) target_artwork();
+}
+module beam_disc() { translate(shadow_offset) circle(r=beam_radius(Shadow_length)); }
+// How far light reaches from the artwork. Rounded joins: a mitred outset spikes at
+// acute corners into slivers too fine to cut.
+module grown_artwork() {
+    offset(r=Light_limit_thickness,$fn=min(Cylinder_facets,64)) target_artwork();
+}
+// The bound applied outside the silhouette.
+module limit_region() {
+    if(Light_limit_shape=="Same as shadow") grown_artwork();
+    else if(Light_limit_shape=="Circle")
+        translate(shadow_offset) circle(r=k*Shadow_length+Light_limit_thickness);
+    else translate(shadow_offset) rotate(Artwork_rotation)
+        square(2*(art_half(Shadow_length)
+            +[Light_limit_thickness,Light_limit_thickness]),center=true);
+}
+module outside_field() {
+    if(Light_limit_outside)
+        intersection() { difference() { beam_disc(); target_outline(); } limit_region(); }
+    else difference() { beam_disc(); target_outline(); }
+}
+module inside_field() {
+    if(inside_limited) intersection() { target_outline(); grown_artwork(); }
+    else target_outline();
+}
+// Splitting the field at the silhouette is the only way to bound one side and not the
+// other: offset() moves every boundary at once and eats an enclosed interior.
+module light_field() {
+    if(!light_limit_on) beam_disc();
+    else union() { outside_field(); inside_field(); }
+}
 module raw_intended_light() {
     if(Artwork_mode=="Light shapes") target_artwork();
-    else difference() { translate(shadow_offset) circle(r=beam_radius(Shadow_length)); target_artwork(); }
+    else difference() { light_field(); target_artwork(); }
 }
 // Closing the light field removes hairline opaque slivers instead of narrowing
 // every light stroke. Remaining detached solids get real ribs in mesh preflight.
@@ -625,15 +769,31 @@ module sample_rays() {
 }
 module diagnostics() {
     lines = [str("Artwork: ",active_artwork),
-        valid ? "OPTICAL ENVELOPE: PASS" : "GENERATION NOT POSSIBLE",
+        // First line after the source, because a crop that is not understood reads as a bug.
+        if(using_svg) str("Direct import: clamped to a ",Shadow_length," mm square on ",
+            Svg_long_axis,". Cropped on two sides? The OTHER axis is the longer one."),
+        valid ? "OPTICAL ENVELOPE: PASS"
+            : can_build ? "BUILDS - BELOW QUALITY LIMITS" : "GENERATION NOT POSSIBLE",
         str("Shadow XY: ",Shadow_x,", ",Shadow_y," mm; standoff ",stand," mm"),
         str("LED xyz = 0, 0, ",round(local_h*100)/100," mm (local)"),
         str("Centre hidden: radius ",round(dead*10)/10," mm"),
         str("Cut estimate: ",round(cut_estimate(Cylinder_height,Shadow_length)*1000)/1000," mm"),
         str("Blur estimate: ",round(blur_estimate(Cylinder_height,Shadow_length)*100)/100," mm"),
-        valid ? "Check stencil connectivity before printing." : suggestion_text];
+        if(light_limit_on) str("Light band: ",Light_limit_thickness," mm ",Light_limit_shape,
+            " -> ",round(limit_cut(Cylinder_height,Shadow_length)*1000)/1000," mm slot",
+            limit_cut(Cylinder_height,Shadow_length)<Minimum_cut_width
+                ? str(" TOO FINE, needs ",round(limit_needed(Cylinder_height,Shadow_length)*10)/10," mm") : ""),
+        // On screen, not just in the console: a silently ignored setting is the one
+        // failure mode that looks exactly like the feature not working.
+        if(light_limit_on) str("Limited outside: ",Light_limit_outside ? "yes" : "no",
+            ", inside: ",inside_limited ? "yes" : "no",
+            outline_known ? "" : str("  (interior closed at ",interior_span," mm)")),
+        valid ? "Check stencil connectivity before printing."
+            : quality_warning ? str("Detail will be lost. ",suggestion_text)
+            : suggestion_text];
     for(i=[0:len(lines)-1]) translate([0,-i*6,0])
-        color(valid ? [0.4,0.9,0.6] : [1,0.25,0.15])
+        // Amber for "builds but coarse", red only for geometry that cannot exist.
+        color(valid ? [0.4,0.9,0.6] : quality_warning ? [1,0.72,0.2] : [1,0.25,0.15])
             linear_extrude(height=0.6) text(lines[i],size=4);
 }
 
@@ -646,9 +806,12 @@ else if(Output=="Standoff") {
     standoff_ring();
 }
 else if(Output=="Diagnostics") diagnostics();
-else if(!valid) {
+else if(!export_ok) {
     if(Output=="Body" || Output=="Print layout")
-        assert(false,str("Generation impossible. ",suggestion_text));
+        assert(false,str(can_build
+            ? "Below the quality limits, and Quality_limits is set to Refuse. "
+            : "Generation impossible: the geometry itself cannot be built. ",
+            suggestion_text));
     else diagnostics();
 } else if(Output=="Body") body();
 else if(Output=="Print layout") {

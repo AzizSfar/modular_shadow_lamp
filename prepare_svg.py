@@ -100,6 +100,67 @@ def read_flat_svg(path):
     return groups
 
 
+def artwork_normalisation(groups):
+    """Centre and longest side of the whole artwork; every module must share these."""
+    vertices = [p for g in groups for c in g for p in c]
+    xmin, xmax = min(p[0] for p in vertices), max(p[0] for p in vertices)
+    ymin, ymax = min(p[1] for p in vertices), max(p[1] for p in vertices)
+    longest = max(xmax-xmin, ymax-ymin)
+    if longest <= 0:
+        raise ValueError("The SVG has zero extent")
+    return (xmin+xmax)/2, (ymin+ymax)/2, longest
+
+
+def contour_area(contour):
+    return 0.5*sum(contour[i][0]*contour[(i+1) % len(contour)][1]
+                   - contour[(i+1) % len(contour)][0]*contour[i][1]
+                   for i in range(len(contour)))
+
+
+def point_inside(point, contour):
+    """Ray cast. The point comes off a contour vertex, never off an edge."""
+    x, y = point
+    inside = False
+    for i in range(len(contour)):
+        x1, y1 = contour[i]
+        x2, y2 = contour[(i+1) % len(contour)]
+        if (y1 > y) != (y2 > y) and x < (x2-x1)*(y-y1)/(y2-y1)+x1:
+            inside = not inside
+    return inside
+
+
+def silhouette_contours(groups, longest):
+    """Outermost contours only: the artwork with every hole filled in.
+
+    OpenSCAD fills a path even-odd, so a contour sitting inside another one is a hole.
+    Nesting depth is counted within its own group; a contour that ends up inside some
+    other group is simply absorbed by the union, so cross-group nesting can be ignored.
+    """
+    kept = []
+    for group in groups:
+        for index, contour in enumerate(group):
+            if abs(contour_area(contour)) < 1e-9*longest*longest:
+                continue  # a degenerate sliver contributes nothing and upsets CGAL
+            depth = sum(1 for other_index, other in enumerate(group)
+                        if other_index != index and point_inside(contour[0], other))
+            if depth == 0:
+                kept.append(contour)
+    if not kept:
+        raise ValueError("The artwork has no outer contour to take a silhouette from")
+    return kept
+
+
+def outline_module(groups, name="embedded_artwork_outline"):
+    cx, cy, longest = artwork_normalisation(groups)
+    lines = [f"module {name}() {{", "    union() {"]
+    for contour in silhouette_contours(groups, longest):
+        points = [[round((x-cx)/longest, 9), round((y-cy)/longest, 9)] for x, y in contour]
+        lines.append("        polygon(points="+json.dumps(points, separators=(",", ":"))
+                     + ",convexity=30);")
+    lines += ["    }", "}"]
+    return "\n".join(lines)
+
+
 def embedded_module(groups):
     vertices = [p for g in groups for c in g for p in c]
     xmin, xmax = min(p[0] for p in vertices), max(p[0] for p in vertices)
@@ -298,6 +359,16 @@ def main():
     parser.add_argument("--emitter-diameter",type=float,default=0.2)
     parser.add_argument("--emitter-depth",type=float,default=0)
     parser.add_argument("--dark-silhouette",action="store_true")
+    parser.add_argument("--light-limit",action="store_true",
+                        help="Dark silhouette only: bound the lit field to a band round the shadow")
+    parser.add_argument("--light-limit-shape",default="Same as shadow",
+                        choices=["Same as shadow","Circle","Rectangle"])
+    parser.add_argument("--light-limit-thickness",type=float,default=25,
+                        help="Band width on the wall, mm")
+    parser.add_argument("--light-limit-outside",choices=["on","off"],default="on",
+                        help="Bound the light outside the artwork silhouette")
+    parser.add_argument("--light-limit-inside",choices=["on","off"],default="on",
+                        help="off leaves an enclosed interior fully lit")
     parser.add_argument("--no-auto-bridges",action="store_true",help="Report floating parts instead of adding bridges")
     parser.add_argument("--skip-mesh-check",action="store_true",help="Fast conversion only; no printability evidence")
     parser.add_argument("--output",type=Path,default=ROOT/"output"/"my_shadow_lamp.scad")
@@ -317,7 +388,8 @@ def main():
     importer.write_text("import(file="+json.dumps(svg.as_posix())+",center=true,dpi=96,$fn=180);\n",encoding="utf-8")
     flat=work/"flattened.svg"
     run_scad(exe,importer,flat)
-    module,radius,size,vertex_count=embedded_module(read_flat_svg(flat))
+    shadow_groups=read_flat_svg(flat)
+    module,radius,size,vertex_count=embedded_module(shadow_groups)
     source=(ROOT/"modular_shadow_lamp.scad").read_text(encoding="utf-8")
     source=re.sub(r"// BEGIN EMBEDDED ARTWORK.*?// END EMBEDDED ARTWORK",
                   "// BEGIN EMBEDDED ARTWORK\n"+module+"\n// END EMBEDDED ARTWORK",source,flags=re.S)
@@ -343,7 +415,23 @@ def main():
             "Shadow_x":args.shadow_x,"Shadow_y":args.shadow_y,"Cover_hole_diameter":args.cover_hole,
             "Embedded_cover_artwork":bool(args.cover_svg),"Support_layout":args.support_layout,
             "Wall_standoff":args.wall_standoff,"Standoff_mode":args.standoff_mode,
+            "Light_limit":bool(args.light_limit),"Light_limit_shape":args.light_limit_shape,
+            "Light_limit_thickness":args.light_limit_thickness,
+            "Light_limit_outside":args.light_limit_outside=="on",
+            "Light_limit_inside":args.light_limit_inside=="on","Embedded_outline":True,
             "Artwork_mode":"Dark silhouette" if args.dark_silhouette else "Light shapes"}
+    # The generator can only wrap a true rectangle round artwork whose real
+    # proportions it knows, so measure them here rather than assume a square.
+    values["Embedded_extent"]=[round(size[0]/max(size),9),round(size[1]/max(size),9)]
+    # offset() moves every boundary at once, so bounding the light outside a closed
+    # outline without eating its interior needs the silhouette as separate geometry.
+    source=re.sub(r"// BEGIN ARTWORK SILHOUETTE.*?// END ARTWORK SILHOUETTE",
+                  "// BEGIN ARTWORK SILHOUETTE\n"+outline_module(shadow_groups)+
+                  "\n// END ARTWORK SILHOUETTE",source,flags=re.S)
+    if args.light_limit and not args.dark_silhouette:
+        parser.error("--light-limit only applies with --dark-silhouette")
+    if args.light_limit_thickness<=0:
+        parser.error("The light limit band must have a positive thickness")
     if args.wall_standoff<0:
         parser.error("The wall standoff cannot be negative")
     if args.support:
@@ -369,9 +457,16 @@ def main():
         log=run_scad(exe,output,work/"diagnostics.csg",['Output="Diagnostics"'])
         report["optical_log"]=log
         if "GENERATION NOT POSSIBLE" in log:
-            report["validation"]="OPTICAL LIMITS FAILED"
+            report["validation"]="GEOMETRY IMPOSSIBLE"
             print(log)
-            raise RuntimeError("Optical limits failed. The generated SCAD contains specific suggestions.")
+            raise RuntimeError("The geometry itself cannot be built. "
+                               "The generated SCAD contains specific suggestions.")
+        # Cut width and blur are print-quality judgements: the part builds either way, so
+        # carry the warning through to the report instead of refusing on the user's behalf.
+        warnings=[line for line in log.splitlines() if "WARNING: this builds" in line]
+        report["quality_warnings"]=warnings
+        for line in warnings:
+            print(line.replace('ECHO: "','').rstrip('"'),flush=True)
         if args.minimum_web>0:
             print('Simplifying fragile opaque slivers on the developed shell surface.',flush=True)
             source,report['surface_preparation']=prepare_surface(source,output,work,exe,args.minimum_web)
@@ -385,7 +480,8 @@ def main():
                 result=mesh_report(mesh,world_h,world_z,args.minimum_web**3)
                 report["body_mesh"]=result
                 if result["surface_components"]==1 and result["closed_two_manifold_edges"]:
-                    report["validation"]="CONNECTED BODY; CLOSED TWO-MANIFOLD EDGES; OPTICAL ENVELOPE PASSES"
+                    report["validation"]=("CONNECTED BODY; CLOSED TWO-MANIFOLD EDGES; "
+                        +("BELOW QUALITY LIMITS" if warnings else "OPTICAL ENVELOPE PASSES"))
                     shutil.copy2(mesh,output.with_suffix(".stl"))
                     report['mesh_source_sha256']=hashlib.sha256(output.read_bytes()).hexdigest()
                     break

@@ -57,7 +57,7 @@ class StandoffOpticsTests(unittest.TestCase):
 
     def test_a_standoff_reaches_a_length_the_flush_module_cannot(self):
         """The reason the feature exists: 600 mm is out of reach flush, and fine at 50 mm."""
-        self.assertIn("GENERATION NOT POSSIBLE",
+        self.assertIn("BELOW QUALITY LIMITS",
                       diagnostics("reach_flush", "Wall_standoff=0", "Shadow_length=600"))
         self.assertIn("OPTICAL ENVELOPE PASSES",
                       diagnostics("reach_lifted", "Wall_standoff=50", "Shadow_length=600"))
@@ -114,3 +114,45 @@ class StandoffPartTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QualityGateTests(unittest.TestCase):
+    """Missing a print-quality limit builds and warns; broken geometry still refuses."""
+
+    def status(self, log):
+        for marker in ("OPTICAL ENVELOPE PASSES", "BELOW QUALITY LIMITS",
+                       "GENERATION NOT POSSIBLE"):
+            if marker in log:
+                return marker
+        raise AssertionError("no status reported")
+
+    def test_a_coarse_but_buildable_request_now_builds(self):
+        log = diagnostics("gate_coarse", "Shadow_length=600")
+        self.assertEqual(self.status(log), "BELOW QUALITY LIMITS")
+        self.assertIn("WARNING: this builds", log)
+        report = part("gate_coarse_body", "Body", "Shadow_length=600")
+        self.assertEqual(report["surface_components"], 1)
+        self.assertTrue(report["closed_two_manifold_edges"])
+
+    def test_refuse_restores_the_old_behaviour(self):
+        with self.assertRaises(RuntimeError):
+            part("gate_refused", "Body", "Shadow_length=600", 'Quality_limits="Refuse"')
+
+    def test_broken_geometry_refuses_even_in_warn_mode(self):
+        cases = {"swallowed": ("Shadow_length=100", "Wall_standoff=100"),
+                 "source_below_pillar": ('LED_position="Manual height"', "Manual_LED_height=0")}
+        for name, definitions in cases.items():
+            with self.subTest(case=name):
+                self.assertEqual(self.status(diagnostics("gate_" + name, *definitions)),
+                                 "GENERATION NOT POSSIBLE")
+                with self.assertRaises(RuntimeError):
+                    part("gate_" + name + "_body", "Body", *definitions, 'Quality_limits="Warn"')
+
+    def test_the_warning_names_the_number_that_failed(self):
+        log = diagnostics("gate_numbers", "Shadow_length=600")
+        self.assertRegex(log, r"smallest cut is [\d.]+ mm against a [\d.]+ mm minimum")
+
+    def test_a_passing_design_says_nothing(self):
+        log = diagnostics("gate_pass")
+        self.assertEqual(self.status(log), "OPTICAL ENVELOPE PASSES")
+        self.assertNotIn("WARNING: this builds", log)

@@ -168,6 +168,92 @@ estimate -- a length the flush module cannot reach at all.
 
 This is a **local first-order feature estimate**, not an exact minimum-thickness computation on every curve, ligament or oblique channel. Sharp tips naturally approach zero width. What counts as an important feature must be specified by the designer. The helper detects disconnected components but does not certify every ligament's width or printer capability.
 
+### 5c. A bounded lit field
+
+A dark silhouette normally subtracts the artwork from a disc of radius k*L + border. The
+light limit replaces that disc with a bounded region D, so the lit field is D minus the
+artwork. Three choices of D:
+
+```
+Same as shadow:  D = artwork (+) disk(T)        rho_max = k*L + T
+Circle:          D = disk(k*L + T)              rho_max = k*L + T
+Rectangle:       D = box(w*L/2 + T, h*L/2 + T)  rho_max = hypot(w*L/2 + T, h*L/2 + T)
+```
+
+where (+) is Minkowski addition, w and h are the artwork's extents as fractions of its
+longest side, and T is the band width on the wall. The rectangle reaches furthest at its
+corner, which is what rho_max must use; taking its half-width instead understates the
+envelope by up to sqrt(2) and lets an infeasible request pass.
+
+The band width is the one wall feature whose size is known rather than declared, so its
+slot in the shell follows directly from section 5:
+
+```
+w_band = T * min(R_i/rho_max, h*R_i/rho_max^2).
+```
+
+Since rho_max itself contains T, the thinnest band that still opens a w_min slot has no
+closed form; the generator settles it by repeated substitution. At h=24, R_i=48, k=0.5 and
+L=300 the fixed point is T = 8.8 mm for w_min = 0.4 mm. A standoff raises h and so lowers
+that floor: 4.5 mm at S=20.
+
+### 5d. Bounding one side of a closed outline
+
+Minkowski addition moves every boundary of A outwards, which for a hole means inwards. On a
+closed outline the enclosed interior is a hole, so `A (+) disk(T)` shrinks it by T and the
+interior goes dark. Bounding the outside without touching the inside needs the silhouette
+
+```
+F = fill(A),   A's outermost contours with every hole filled,
+```
+
+and then the field splits at F:
+
+```
+outside = (disk(beam) - F)  intersect  (bounded ? D : everything)
+inside  = F                 intersect  (bounded ? A (+) disk(T) : everything)
+D_total = outside union inside,     lit = D_total - A.
+```
+
+All four on/off combinations fall out of this, and both switches off reproduce the plain
+dark silhouette exactly. fill(A) is not obtainable from A by morphology -- a closing fills
+holes only up to its own radius and rounds everything else on the way -- so it comes from
+contour topology instead: flatten the SVG, count how many contours of the same path contain
+each contour, and keep those at even-odd depth zero. That is a property of the path data, not
+of the rendered region, so it is available to the preparation helper and not to `import()`.
+
+When the silhouette cannot be measured -- a direct `import()`, and so every MakerWorld
+upload -- fill(A) is approximated by a morphological closing with a mitred structuring
+element of half-width S:
+
+```
+fill(A) ~= erode(dilate(A, S), S).
+```
+
+Dilation followed by erosion returns a convex boundary to where it started and closes any
+enclosed area or concave pocket narrower than 2S, so the error is confined to outer pockets
+narrower than the span. Measured against the exact silhouette of the Monza outline at
+L=300 mm, where the true fill is 19,304 mm^2:
+
+| S | closing | missing | extra | error |
+|---:|---:|---:|---:|---:|
+| 40 mm | 7,800 | 11,573 | 69 | 60.3% |
+| 60 mm | 19,420 | 2 | 117 | 0.62% |
+| 120 mm | 19,509 | 3 | 208 | 1.10% |
+| 200 mm | 19,308 | 141 | 144 | 1.48% |
+| 450 mm | 21,882 | 8 | 2,586 | 13.4% |
+
+The usable window is broad: anything from just over half the enclosed width up to roughly the
+artwork's own length agrees with the exact silhouette to within about 1.5%. Below that it
+under-fills sharply, and far above it the result drifts toward the convex hull, which for this
+outline is 28,628 mm^2. Rounded joins were rejected: `offset(r=)` pulls the outer boundary in
+during erosion, whereas mitred joins restore it exactly.
+
+The construction says nothing about connectivity. D minus artwork is an annular region
+whenever the artwork lies inside D, so every enclosed shape is a separate component of the
+opaque stencil. That is already true of the unbounded disc and is not made worse here, but
+it is structural rather than incidental: no choice of T avoids it.
+
 ## 6. Finite LED size and blur
 
 At a fixed aperture point (Q_xy,z), the wall point from a source with transverse location S_xy is

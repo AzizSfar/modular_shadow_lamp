@@ -35,6 +35,13 @@ def main():
     parser.add_argument('--wall-standoff',type=float,default=0)
     parser.add_argument('--minimum-web',type=float,default=0)
     parser.add_argument('--automatic-bridges-only',action='store_true')
+    parser.add_argument('--dark-silhouette',action='store_true')
+    parser.add_argument('--light-limit',action='store_true')
+    parser.add_argument('--light-limit-thickness',type=float,default=25)
+    parser.add_argument('--light-limit-shape',default='Same as shadow',
+                        choices=['Same as shadow','Circle','Rectangle'])
+    parser.add_argument('--light-limit-outside',choices=['on','off'],default='on')
+    parser.add_argument('--light-limit-inside',choices=['on','off'],default='on')
     parser.add_argument('--no-open',action='store_true',help='Prepare only, without opening a window')
     args=parser.parse_args()
     exe=Path(find_openscad())
@@ -60,6 +67,12 @@ def main():
         for name in ['shape','rectangle_width','rectangle_depth','wall_standoff','minimum_web']:
             command+=['--'+name.replace('_','-'),str(getattr(args,name))]
         if args.automatic_bridges_only: command+=['--automatic-bridges-only']
+        if args.dark_silhouette: command+=['--dark-silhouette']
+        if args.light_limit:
+            command+=['--light-limit','--light-limit-thickness',str(args.light_limit_thickness),
+                      '--light-limit-shape',args.light_limit_shape,
+                      '--light-limit-outside',args.light_limit_outside,
+                      '--light-limit-inside',args.light_limit_inside]
         if cover_svg:
             command+=['--cover-svg',str(cover_svg.resolve(strict=True))]
         result=subprocess.run(command)

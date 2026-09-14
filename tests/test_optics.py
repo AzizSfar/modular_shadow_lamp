@@ -55,7 +55,8 @@ class OpticsTests(unittest.TestCase):
         self.assertAlmostEqual(echo_number(log,'Central occlusion radius mm'),50*24/(24-5.5),places=3)
         log=run_scad(exe,ROOT/'modular_shadow_lamp.scad',ROOT/'output'/'test_impossible.csg',
                      ['Output="Diagnostics"','Use_svg=true','Shadow_length=1000'])
-        self.assertIn('GENERATION NOT POSSIBLE',log)
+        # Missing the cut limit is a quality judgement now, not a refusal to build.
+        self.assertIn('BELOW QUALITY LIMITS',log)
         pair=re.search(r'SUGGESTED sampled compromise.*?\[([\d.]+), ([\d.]+)\]',log)
         self.assertIsNotNone(pair)
         height,length=map(float,pair.groups())
@@ -64,12 +65,16 @@ class OpticsTests(unittest.TestCase):
         self.assertIn('OPTICAL ENVELOPE PASSES',retry)
 
     def test_zero_height_and_extended_source_fail(self):
+        """A source below the pillar is geometry; a wide emitter is only bad quality."""
         exe=find_openscad()
-        for extra in [['LED_position="Manual height"','Manual_LED_height=0'],
-                      ['Emitter_diameter=5'],['Emitter_axial_depth=1']]:
+        for extra,expected in [(['LED_position="Manual height"','Manual_LED_height=0'],
+                                'GENERATION NOT POSSIBLE'),
+                               (['Emitter_diameter=5'],'BELOW QUALITY LIMITS'),
+                               (['Emitter_axial_depth=1'],'BELOW QUALITY LIMITS')]:
             log=run_scad(exe,ROOT/'modular_shadow_lamp.scad',ROOT/'output'/'test_bad_source.csg',
                          ['Output="Diagnostics"']+extra)
-            self.assertIn('GENERATION NOT POSSIBLE',log)
+            self.assertIn(expected,log)
+            self.assertNotIn('OPTICAL ENVELOPE PASSES',log)
 
     def test_stacked_module_absolute_height(self):
         log=run_scad(find_openscad(),ROOT/'modular_shadow_lamp.scad',ROOT/'output'/'test_stack.csg',
